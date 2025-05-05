@@ -4,7 +4,7 @@ import {View} from 'react-native';
 const FallDetectionScreen = () => {
   return (
     <View>
-      <Text>메인~</Text>
+      <Text>낙상감지</Text>
     </View>
   );
 };

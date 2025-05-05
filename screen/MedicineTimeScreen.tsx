@@ -4,7 +4,7 @@ import {View} from 'react-native';
 const MedicineTimeScreen = () => {
   return (
     <View>
-      <Text>메인~</Text>
+      <Text>복약알림</Text>
     </View>
   );
 };
