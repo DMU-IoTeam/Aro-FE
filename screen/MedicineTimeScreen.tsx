@@ -1,10 +1,14 @@
 import {Text} from '@react-navigation/elements';
-import {StyleSheet, View, FlatList} from 'react-native';
+import {StyleSheet, View, FlatList, Pressable} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faSquare, faSquareCheck} from '@fortawesome/free-regular-svg-icons';
+import {useNavigation} from '@react-navigation/native';
+import {useRecoilState} from 'recoil';
+import {medicineTimeState} from '../store/medicine.store';
 
 const MedicineTimeScreen = () => {
-  const temp = [
+  //   const [medicineTime, setMedicineTime] = useRecoilState(medicineTimeState);
+  const medicineTime = [
     {
       time: '06:00',
       isAm: true,
@@ -31,10 +35,29 @@ const MedicineTimeScreen = () => {
     },
   ];
 
+  const navigation = useNavigation();
+//   console.log(medicineTime);
   return (
     <View style={{padding: 10, gap: 10}}>
+      <View style={{flexDirection: 'row'}}>
+        <Pressable
+          onPress={() => {
+            navigation.navigate('MedicineTimeSettingScreen');
+          }}
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 9999,
+            backgroundColor: 'gray',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text>+</Text>
+        </Pressable>
+      </View>
+
       <FlatList
-        data={temp}
+        data={medicineTime}
         renderItem={({item}) => (
           <MedicineScheduleItem
             time={item.time}
@@ -66,7 +89,7 @@ const MedicineScheduleItem = ({
         backgroundColor: 'white',
         borderColor: 'gray',
         borderWidth: 1,
-        marginBottom: 8
+        marginBottom: 8,
       }}>
       {/* 시간 */}
       <View

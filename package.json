@@ -23,6 +23,8 @@
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0",
     "react-native-svg": "^15.11.2",
+    "react-native-wheely": "^0.6.0",
+    "recoil": "^0.7.7",
     "styled-components": "^6.1.17"
   },
   "devDependencies": {
