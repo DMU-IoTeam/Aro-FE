@@ -16,32 +16,40 @@ const MainScreen = () => {
     {
       color: '#309898',
       text: '복약 설정',
+      screenName: 'MedicineTimeScreen'
     },
     {
       color: '#F4631E',
-      text: '외부 설정',
+      text: '외부 일정',
+      screenName: 'ScheduleScreen'
     },
     {
       color: '#FF9F00',
       text: '건강 체크',
+      screenName: 'HealthCheckScreen'
     },
     {
       color: '#CB0404',
       text: '위험 감지',
+      screenName: 'FallDetectionScreen'
     },
   ];
 
   return (
     <Container>
       {/* 프로필 */}
-      <View
+      <Pressable
         style={{
           backgroundColor: COLOR.DEFAULT_COLOR,
           padding: 18,
           borderRadius: layout.BORDER_RADIUS,
           flexDirection: 'row',
           gap: 14,
-        }}>
+        }}
+        onPress={()=>{
+            navigateHandler('ClientageProfileScreen')
+        }}
+        >
         <Image
           style={styles.profileImage}
           source={require('../assets/profile.png')}
@@ -51,7 +59,7 @@ const MainScreen = () => {
           <Text style={styles.profileText}>77세</Text>
           <Text style={styles.profileText}>병력: 당뇨, 고혈압</Text>
         </View>
-      </View>
+      </Pressable>
 
       {/* 네비게이션 버튼 */}
       <View
@@ -77,7 +85,7 @@ const MainScreen = () => {
                 alignItems: 'center',
               }}
               onPress={() => {
-                navigateHandler();
+                navigateHandler(value.screenName);
               }}
               key={index}>
               <Text style={{color: value.color, fontWeight: 700, fontSize: 18}}>
@@ -89,17 +97,21 @@ const MainScreen = () => {
       </View>
 
       {/* 로봇 상태 */}
-      <View
+      <Pressable
         style={{
           borderRadius: 10,
           backgroundColor: COLOR.DEFAULT_COLOR,
           padding: 8,
-        }}>
+        }}
+        onPress={()=>{
+            navigateHandler('RobotConditionScreen')
+        }}
+        >
         <Text style={{color: 'white', fontWeight: 700}}>로봇 배터리: 88%</Text>
         <Text style={{color: 'white', fontWeight: 700}}>
           시리얼 넘버: q1w2e3r4t5
         </Text>
-      </View>
+      </Pressable>
     </Container>
   );
 };

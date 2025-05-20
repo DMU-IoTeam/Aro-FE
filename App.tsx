@@ -13,6 +13,10 @@ import FallDetectionScreen from './screen/FallDetectionScreen';
 import MedicineTimeScreen from './screen/MedicineTimeScreen';
 import MedicineTimeSettingScreen from './screen/MedicineTimeSettingScreen';
 import {RecoilRoot} from 'recoil';
+import HealthCheckScreen from './screen/HealthCheckScreen';
+import ScheduleScreen from './screen/ScheduleScreen';
+import RobotConditionScreen from './screen/RobotConditionScreen';
+import ClientageProfileScreen from './screen/ClientageProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +32,22 @@ function RootStack() {
       <Stack.Screen
         name="MedicineTimeSettingScreen"
         component={MedicineTimeSettingScreen}
+      />
+      <Stack.Screen
+        name="HealthCheckScreen"
+        component={HealthCheckScreen}
+      />
+      <Stack.Screen
+        name="ScheduleScreen"
+        component={ScheduleScreen}
+      />
+      <Stack.Screen
+        name="RobotConditionScreen"
+        component={RobotConditionScreen}
+      />
+      <Stack.Screen
+        name="ClientageProfileScreen"
+        component={ClientageProfileScreen}
       />
     </Stack.Navigator>
   );
