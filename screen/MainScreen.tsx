@@ -4,6 +4,7 @@ import {Pressable, StyleSheet, View, Image} from 'react-native';
 import Container from '../layouts/Container';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
+import CommonButton from '../components/common/CommonButton';
 
 const MainScreen = () => {
   const navigation = useNavigation();
@@ -16,22 +17,22 @@ const MainScreen = () => {
     {
       color: '#309898',
       text: '복약 설정',
-      screenName: 'MedicineTimeScreen'
+      screenName: 'MedicineTimeScreen',
     },
     {
       color: '#F4631E',
       text: '외부 일정',
-      screenName: 'ScheduleScreen'
+      screenName: 'ScheduleScreen',
     },
     {
       color: '#FF9F00',
       text: '건강 체크',
-      screenName: 'HealthCheckScreen'
+      screenName: 'HealthCheckScreen',
     },
     {
       color: '#CB0404',
       text: '위험 감지',
-      screenName: 'FallDetectionScreen'
+      screenName: 'FallDetectionScreen',
     },
   ];
 
@@ -46,10 +47,9 @@ const MainScreen = () => {
           flexDirection: 'row',
           gap: 14,
         }}
-        onPress={()=>{
-            navigateHandler('ClientageProfileScreen')
-        }}
-        >
+        onPress={() => {
+          navigateHandler('ClientageProfileScreen');
+        }}>
         <Image
           style={styles.profileImage}
           source={require('../assets/profile.png')}
@@ -68,7 +68,7 @@ const MainScreen = () => {
           flexDirection: 'row',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          marginTop: 15
+          marginTop: 15,
         }}>
         {navigationItem.map((value, index) => {
           return (
@@ -103,15 +103,30 @@ const MainScreen = () => {
           backgroundColor: COLOR.DEFAULT_COLOR,
           padding: 8,
         }}
-        onPress={()=>{
-            navigateHandler('RobotConditionScreen')
-        }}
-        >
+        onPress={() => {
+          navigateHandler('RobotConditionScreen');
+        }}>
         <Text style={{color: 'white', fontWeight: 700}}>로봇 배터리: 88%</Text>
         <Text style={{color: 'white', fontWeight: 700}}>
           시리얼 넘버: q1w2e3r4t5
         </Text>
       </Pressable>
+
+      {/* 임시~ */}
+      <View style={{flexDirection: 'row', gap: 24, marginTop: 24}}>
+        <CommonButton
+          onPress={() => {
+            navigateHandler('LoginScreen');
+          }}>
+          로그인
+        </CommonButton>
+        <CommonButton
+          onPress={() => {
+            navigateHandler('SignupScreen');
+          }}>
+          회원가입
+        </CommonButton>
+      </View>
     </Container>
   );
 };
