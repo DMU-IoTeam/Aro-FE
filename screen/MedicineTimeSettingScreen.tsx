@@ -1,6 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TextInput, Pressable} from 'react-native';
 import WheelPicker from 'react-native-wheely';
+import Input from '../components/common/Input';
+import CommonButton from '../components/common/CommonButton';
+import layout from '../constants/layout';
+import Container from '../layouts/Container';
 
 const LOOP_COUNT = 50;
 const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
@@ -49,12 +53,14 @@ const MedicineTimeSettingScreen = () => {
   }, []);
 
   const medicineAddHandler = () => {
+    if (medicineName.length === 0) return;
     setMedicineArray([...medicineArray, medicineName]);
     setMedicineName('');
   };
 
   return (
-    <View style={styles.container}>
+    <Container style={{position: 'relative'}}>
+      {/* 시간 선택 */}
       <View style={styles.pickerRow}>
         <WheelPicker
           options={baseAmPm}
@@ -85,43 +91,55 @@ const MedicineTimeSettingScreen = () => {
         />
       </View>
 
-      {/* <Text style={styles.selectedText}>
-        선택된 시간: {baseAmPm[ampmIndex]} {repeatedHours[hourIndex]}:
-        {repeatedMinutes[minuteIndex]}
-      </Text> */}
-      <View
-        style={{flexDirection: 'row', paddingHorizontal: 30, marginTop: 40}}>
-        <TextInput
+      {/* 약 추가 인풋 */}
+      <View style={{flexDirection: 'row', marginTop: 40}}>
+        <Input
           value={medicineName}
           onChangeText={setMedicineName}
           placeholder="복용할 약을 입력해주세요"
           style={styles.inputStyle}
         />
-        <Pressable onPress={medicineAddHandler}>
-          <Text>추가</Text>
-        </Pressable>
+        <CommonButton onPress={medicineAddHandler}>추가</CommonButton>
       </View>
 
-      {medicineArray.map((item, index) => {
-        return (
-          <View key={index}>
-            <Text>{item}</Text>
-          </View>
-        );
-      })}
-    </View>
+      {/* 추가된 약 리스트 */}
+      <View style={{marginTop: 8}}>
+        {medicineArray.map((item, index) => {
+          return (
+            <View
+              key={index}
+              style={{
+                borderRadius: layout.BORDER_RADIUS,
+                borderWidth: 1,
+                borderColor: 'gray',
+                width: '100%',
+                padding: 10,
+                marginVertical: 8,
+              }}>
+              <Text style={{fontSize: layout.FONT_SIZE}}>{item}</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 50,
+          width: '100%',
+          left: layout.HORIZONTAL_VALUE,
+        }}>
+        <CommonButton onPress={() => {}}>확인</CommonButton>
+      </View>
+    </Container>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 100,
-    alignItems: 'center',
-  },
   pickerRow: {
     flexDirection: 'row',
     gap: 20,
+    justifyContent: 'center',
   },
   selectedText: {
     marginTop: 40,

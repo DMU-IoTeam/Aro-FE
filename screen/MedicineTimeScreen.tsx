@@ -5,6 +5,9 @@ import {faSquare, faSquareCheck} from '@fortawesome/free-regular-svg-icons';
 import {useNavigation} from '@react-navigation/native';
 import {useRecoilState} from 'recoil';
 import {medicineTimeState} from '../store/medicine.store';
+import COLOR from '../constants/color';
+import Container from '../layouts/Container';
+import layout from '../constants/layout';
 
 const MedicineTimeScreen = () => {
   //   const [medicineTime, setMedicineTime] = useRecoilState(medicineTimeState);
@@ -35,24 +38,62 @@ const MedicineTimeScreen = () => {
     },
   ];
 
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
   const navigation = useNavigation();
-//   console.log(medicineTime);
+  //   console.log(medicineTime);
   return (
-    <View style={{padding: 10, gap: 10}}>
+    <Container>
+      {/* 요일 */}
       <View style={{flexDirection: 'row'}}>
+        {days.map((item, index) => {
+          console.log(item);
+          return (
+            <View
+              key={index}
+              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+              {/* 요일 */}
+              <Text style={{fontSize: 24}}>{item}</Text>
+
+              {/* 일자 */}
+              <View
+                style={{
+                  borderRadius: layout.BORDER_RADIUS,
+                  backgroundColor: index === 2 ? COLOR.DEFAULT_COLOR : '#eee',
+                  paddingVertical: 2,
+                  paddingHorizontal: 6,
+                }}>
+                <Text style={{fontSize: 24, color: index === 2 && 'white'}}>
+                  {String(index).padStart(2, '0')}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={{marginTop: 8, marginBottom: 14}}>
         <Pressable
           onPress={() => {
             navigation.navigate('MedicineTimeSettingScreen');
           }}
           style={{
-            width: 30,
-            height: 30,
+            width: 40,
+            height: 40,
             borderRadius: 9999,
-            backgroundColor: 'gray',
+            backgroundColor: COLOR.DEFAULT_COLOR,
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <Text>+</Text>
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: 40,
+            }}>
+            +
+          </Text>
         </Pressable>
       </View>
 
@@ -66,7 +107,7 @@ const MedicineTimeScreen = () => {
           />
         )}
         keyExtractor={(item, index) => index}></FlatList>
-    </View>
+    </Container>
   );
 };
 
@@ -120,7 +161,11 @@ const MedicineScheduleItem = ({
               }}
               key={index}>
               {item.taking ? (
-                <FontAwesomeIcon icon={faSquareCheck} size={18} />
+                <FontAwesomeIcon
+                  icon={faSquareCheck}
+                  color={'green'}
+                  size={18}
+                />
               ) : (
                 <FontAwesomeIcon icon={faSquare} size={18} />
               )}
