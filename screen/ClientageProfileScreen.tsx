@@ -32,7 +32,7 @@ const ClientageProfileScreen = () => {
 
       {/* 기본 정보 인풋 */}
       <View style={{marginTop: 36}}>
-        <Input placeholder={'Name'} style={styles.inputLayout} />
+        <Input placeholder={'이름'} style={styles.inputLayout} />
         <Input placeholder={'나이'} style={styles.inputLayout} />
         <Input placeholder={'병력'} style={styles.inputLayout} />
       </View>
