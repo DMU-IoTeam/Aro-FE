@@ -19,6 +19,7 @@ import RobotConditionScreen from './screen/RobotConditionScreen';
 import ClientageProfileScreen from './screen/ClientageProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
+import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,13 +36,11 @@ function RootStack() {
         name="MedicineTimeSettingScreen"
         component={MedicineTimeSettingScreen}
       />
+      <Stack.Screen name="HealthCheckScreen" component={HealthCheckScreen} />
+      <Stack.Screen name="ScheduleScreen" component={ScheduleScreen} />
       <Stack.Screen
-        name="HealthCheckScreen"
-        component={HealthCheckScreen}
-      />
-      <Stack.Screen
-        name="ScheduleScreen"
-        component={ScheduleScreen}
+        name="ScheduleSettingScreen"
+        component={ScheduleSettingScreen}
       />
       <Stack.Screen
         name="RobotConditionScreen"
@@ -51,14 +50,8 @@ function RootStack() {
         name="ClientageProfileScreen"
         component={ClientageProfileScreen}
       />
-      <Stack.Screen
-        name="LoginScreen"
-        component={LoginScreen}
-      />
-      <Stack.Screen
-        name="SignupScreen"
-        component={SignupScreen}
-      />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="SignupScreen" component={SignupScreen} />
     </Stack.Navigator>
   );
 }
