@@ -47,7 +47,7 @@ const MedicineTimeScreen = () => {
       {/* 요일 */}
       <View style={{flexDirection: 'row'}}>
         {days.map((item, index) => {
-          console.log(item);
+          // console.log(item);
           return (
             <View
               key={index}

@@ -126,6 +126,12 @@ const MainScreen = () => {
           }}>
           회원가입
         </CommonButton>
+        <CommonButton
+          onPress={() => {
+            navigateHandler('CalendarScreen');
+          }}>
+          캘린더
+        </CommonButton>
       </View>
     </Container>
   );

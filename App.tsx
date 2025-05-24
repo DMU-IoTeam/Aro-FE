@@ -20,6 +20,7 @@ import ClientageProfileScreen from './screen/ClientageProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
+import CalendarScreen from './screen/CalendarScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ function RootStack() {
       />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="CalendarScreen" component={CalendarScreen} />
     </Stack.Navigator>
   );
 }
