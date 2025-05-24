@@ -117,7 +117,7 @@ type MedicineScheduleItemProps = {
   medicine: object[]; // 타입 명확하면 object 대신 구체적으로!
 };
 
-const MedicineScheduleItem = ({
+export const MedicineScheduleItem = ({
   time,
   isAm,
   medicine,

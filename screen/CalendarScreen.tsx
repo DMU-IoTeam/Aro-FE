@@ -5,6 +5,7 @@ import COLOR from '../constants/color';
 import layout from '../constants/layout';
 import {faChevronLeft, faChevronRight} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {medicineData} from '../assets/data/medicineData';
 
 const CalendarScreen = () => {
   const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -105,6 +106,14 @@ const CalendarScreen = () => {
       date1.getMonth() === date2.getMonth() &&
       date1.getDate() === date2.getDate()
     );
+  };
+
+  const getYearMonthDate = date => {
+    const year = date.getYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return `${year}-${String(month).padStart(2, '0')}-${day}`;
   };
 
   return (
@@ -213,6 +222,12 @@ const CalendarScreen = () => {
           </View>
         );
       })}
+      {/* 
+      {medicineData?.getYearMonthDate(currentDate) && (
+        <View>
+          <Text>hi</Text>
+        </View>
+      )} */}
     </Container>
   );
 };

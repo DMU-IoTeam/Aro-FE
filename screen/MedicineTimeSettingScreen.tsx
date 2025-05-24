@@ -28,6 +28,7 @@ const MedicineTimeSettingScreen = () => {
 
   const [medicineName, setMedicineName] = useState('');
   const [medicineArray, setMedicineArray] = useState([]);
+console.log(repeatedHours)
 
   // 끝에 다다르면 중앙으로 다시 보내는 무한 스크롤 트릭
   const handleHourChange = (index: number) => {
@@ -66,28 +67,34 @@ const MedicineTimeSettingScreen = () => {
           options={baseAmPm}
           selectedIndex={ampmIndex}
           onChange={setAmPmIndex}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
         <WheelPicker
           options={repeatedHours}
           selectedIndex={hourIndex}
           onChange={handleHourChange}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
         <WheelPicker
           options={repeatedMinutes}
           selectedIndex={minuteIndex}
           onChange={handleMinuteChange}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
       </View>
 
@@ -147,13 +154,17 @@ const styles = StyleSheet.create({
   },
   itemStyle: {},
   itemTextStyle: {
-    fontSize: 22,
+    fontSize: 32,
+  },
+  containerStyle:{
+    flex: 1
   },
   selectedIndicatorStyle: {
     borderBottomWidth: 1,
     borderTopWidth: 1,
     borderTopColor: 'gray',
     borderBottomColor: 'gray',
+    backgroundColor: "white",
   },
   inputStyle: {
     borderColor: 'gray',
