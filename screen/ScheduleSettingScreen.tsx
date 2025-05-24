@@ -66,33 +66,39 @@ const ScheduleSettingScreen = () => {
           options={baseAmPm}
           selectedIndex={ampmIndex}
           onChange={setAmPmIndex}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
         <WheelPicker
           options={repeatedHours}
           selectedIndex={hourIndex}
           onChange={handleHourChange}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
         <WheelPicker
           options={repeatedMinutes}
           selectedIndex={minuteIndex}
           onChange={handleMinuteChange}
-          itemHeight={40}
+          itemHeight={60}
           itemStyle={{}}
           itemTextStyle={styles.itemTextStyle}
           selectedIndicatorStyle={styles.selectedIndicatorStyle}
+          visibleRest={1}
+          containerStyle={styles.containerStyle}
         />
       </View>
 
       {/* 약 추가 인풋 */}
-      <View style={{gap: 12}}>
+      <View style={{gap: 12, marginTop: 40}}>
         <Input
           value={medicineName}
           onChangeText={setMedicineName}
@@ -126,13 +132,17 @@ const styles = StyleSheet.create({
   },
   itemStyle: {},
   itemTextStyle: {
-    fontSize: 22,
+    fontSize: 32,
+  },
+  containerStyle:{
+    flex: 1
   },
   selectedIndicatorStyle: {
     borderBottomWidth: 1,
     borderTopWidth: 1,
     borderTopColor: 'gray',
     borderBottomColor: 'gray',
+    backgroundColor: "white",
   },
 });
 
