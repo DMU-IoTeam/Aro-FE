@@ -1,13 +1,18 @@
-import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RecoilRoot } from 'recoil';
-import { Alert } from 'react-native';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import React, {useEffect} from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {RecoilRoot} from 'recoil';
+import {Alert} from 'react-native';
+import notifee, {AndroidImportance} from '@notifee/react-native';
 
 // Firebase Modular API import
-import { app } from './firebase-config';
-import { getMessaging, getToken, onMessage, requestPermission } from '@react-native-firebase/messaging';
+import {app} from './firebase-config';
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  requestPermission,
+} from '@react-native-firebase/messaging';
 
 import MainScreen from './screen/MainScreen';
 import FallDetectionScreen from './screen/FallDetectionScreen';
@@ -28,14 +33,29 @@ function RootStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="MainScreen" component={MainScreen} />
-      <Stack.Screen name="FallDetectionScreen" component={FallDetectionScreen} />
+      <Stack.Screen
+        name="FallDetectionScreen"
+        component={FallDetectionScreen}
+      />
       <Stack.Screen name="MedicineTimeScreen" component={MedicineTimeScreen} />
-      <Stack.Screen name="MedicineTimeSettingScreen" component={MedicineTimeSettingScreen} />
+      <Stack.Screen
+        name="MedicineTimeSettingScreen"
+        component={MedicineTimeSettingScreen}
+      />
       <Stack.Screen name="HealthCheckScreen" component={HealthCheckScreen} />
       <Stack.Screen name="ScheduleScreen" component={ScheduleScreen} />
-      <Stack.Screen name="ScheduleSettingScreen" component={ScheduleSettingScreen} />
-      <Stack.Screen name="RobotConditionScreen" component={RobotConditionScreen} />
-      <Stack.Screen name="ClientageProfileScreen" component={ClientageProfileScreen} />
+      <Stack.Screen
+        name="ScheduleSettingScreen"
+        component={ScheduleSettingScreen}
+      />
+      <Stack.Screen
+        name="RobotConditionScreen"
+        component={RobotConditionScreen}
+      />
+      <Stack.Screen
+        name="ClientageProfileScreen"
+        component={ClientageProfileScreen}
+      />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
       <Stack.Screen name="CalendarScreen" component={CalendarScreen} />
@@ -57,17 +77,8 @@ function App(): React.JSX.Element {
       try {
         const messaging = getMessaging(app);
 
-        const authStatus = await requestPermission(messaging);
-        const enabled =
-          authStatus === 'authorized' || authStatus === 'provisional';
-
-        if (enabled) {
-          const token = await getToken(messaging);
-          console.log('✅ FCM Token:', token);
-          // 서버에 token 저장 또는 테스트용 저장
-        } else {
-          console.warn('🔒 FCM permission not granted');
-        }
+        const token = await getToken(messaging);
+        console.log('✅ FCM Token:', token);
       } catch (error) {
         console.error('FCM setup error:', error);
       }
