@@ -101,7 +101,9 @@ const ScheduleSettingScreen = () => {
       <View style={{gap: 12, marginTop: 40}}>
         <Input
           value={medicineName}
-          onChangeText={setMedicineName}
+          onChangeText={e => {
+            setMedicineName(e.taget.value);
+          }}
           placeholder="일정 입력"
         />
         <CommonButton onPress={medicineAddHandler}>확인</CommonButton>
@@ -134,15 +136,15 @@ const styles = StyleSheet.create({
   itemTextStyle: {
     fontSize: 32,
   },
-  containerStyle:{
-    flex: 1
+  containerStyle: {
+    flex: 1,
   },
   selectedIndicatorStyle: {
     borderBottomWidth: 1,
     borderTopWidth: 1,
     borderTopColor: 'gray',
     borderBottomColor: 'gray',
-    backgroundColor: "white",
+    backgroundColor: 'white',
   },
 });
 

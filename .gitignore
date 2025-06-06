@@ -73,3 +73,7 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# firebase api key 정보
+google-services.json
+firebase-config.ts
