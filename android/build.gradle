@@ -21,3 +21,19 @@ buildscript {
 
 apply plugin: "com.facebook.react.rootproject"
 
+allprojects {
+    repositories {
+        maven {
+            url("$rootDir/../node_modules/react-native/android")
+        }
+        maven {
+            url("$rootDir/../node_modules/jsc-android/dist")
+        }
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+
+        // ✨ 카카오 SDK 저장소 주소
+        maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
+    }
+}
