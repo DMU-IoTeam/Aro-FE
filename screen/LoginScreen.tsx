@@ -1,49 +1,67 @@
-import React, { useState } from 'react';
-import { Modal, Button, View, Platform } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React, {useState} from 'react';
+import {Modal, Button, View, Platform} from 'react-native';
+import {WebView} from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation} from '@react-navigation/native';
 
-// 1. 로그인 프로세스를 '시작'하기 위해 백엔드에 요청하는 주소
-const AUTH_URL = Platform.OS === 'ios' 
-  ? "http://localhost:8080/oauth2/authorization/kakao"
-  : "http://10.0.2.2:8080/oauth2/authorization/kakao";
+const AUTH_URL =
+  Platform.OS === 'ios'
+    ? 'http://localhost:8080/oauth2/authorization/kakao'
+    : 'http://10.0.2.2:8080/oauth2/authorization/kakao';
 
-// 2. 로그인 프로세스를 '종료'하고 성공 여부를 판단하기 위해 감지할 최종 주소
-//    application.yml의 oauth.redirect-uri.success 값과 반드시 일치해야 합니다.
-const FINAL_REDIRECT_URI = "http://localhost:3000/oauth2/redirect";
+const FINAL_REDIRECT_URI = 'http://localhost:3000/oauth2/redirect';
 
 const LoginScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const navigation = useNavigation();
 
-  const handleNavigationStateChange = (navState) => {
-    const { url } = navState;
-    console.log("Navigated to URL:", url);
-
-    // 웹뷰의 주소가 최종 도착지에 도달했는지 확인
+  // 토큰 추출 및 화면 이동 로직을 공통 함수로 분리
+  const processTokenExtraction = async (url: string) => {
     if (url.startsWith(FINAL_REDIRECT_URI)) {
-      console.log("로그인 성공! 최종 URI로 리다이렉트 완료.");
-      
-      // 이제 URL에서 백엔드가 보내준 토큰(JWT)을 추출할 수 있습니다.
-      // 예시 URL: http://localhost:3000/oauth2/redirect?token=your_jwt_token
-      const urlObj = new URL(url);
-      const token = urlObj.searchParams.get("token"); // 백엔드에서 'token'이라는 이름으로 파라미터를 보냈다고 가정
-      
+      console.log('최종 URI로 리다이렉트 감지:', url);
+
+      const match = url.match(/[?&]token=([^&]+)/);
+      const token = match ? match[1] : null;
+
       if (token) {
-        console.log("추출된 JWT 토큰:", token);
-        // 여기서 토큰을 저장하고 메인 화면으로 이동시키는 로직을 구현합니다.
+        console.log('추출된 JWT 토큰:', token);
+        try {
+          console.log('토큰 저장 성공~~~~~~');
+          await AsyncStorage.setItem('accessToken', token);
+          console.log('토큰 저장 성공');
+          navigation.replace('MainScreen'); // 메인 화면으로 이동
+        } catch (e) {
+          console.error('토큰 저장 실패', e);
+        }
       }
-      
-      setIsModalVisible(false); // 성공했으니 모달을 닫습니다.
+      // 성공적으로 토큰을 처리했거나, 토큰이 없더라도 모달을 닫음
+      setIsModalVisible(false);
     }
   };
 
+  const handleNavigationStateChange = async navState => {
+    await processTokenExtraction(navState.url);
+  };
+
+  // WebView 에러 핸들러
+  const handleError = async syntheticEvent => {
+    const {nativeEvent} = syntheticEvent;
+    console.warn('WebView error: ', nativeEvent);
+    // 연결 거부 오류가 발생했더라도, URL에 토큰이 포함되어 있을 수 있으므로 토큰 추출 시도
+    await processTokenExtraction(nativeEvent.url);
+  };
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Button title="카카오 로그인" onPress={() => setIsModalVisible(true)} />
-      <Modal visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
+      <Modal
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}>
         <WebView
-          source={{ uri: AUTH_URL }}
+          source={{uri: AUTH_URL}}
           onNavigationStateChange={handleNavigationStateChange}
-          incognito={true} // 세션이나 쿠키 문제 방지를 위해 시크릿 모드 사용
+          onError={handleError}
+          incognito={true}
         />
         <Button title="닫기" onPress={() => setIsModalVisible(false)} />
       </Modal>
