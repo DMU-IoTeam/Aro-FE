@@ -17,3 +17,29 @@ export const getMe = async (): Promise<User> => {
   console.log(response);
   return response.data;
 };
+
+/**
+ * 사용자의 FCM 토큰을 서버에 등록/갱신합니다.
+ * @param fcmToken 사용자의 새로운 FCM 토큰
+ */
+export const registerFcmToken = async (token: string): Promise<void> => {
+  await apiClient.patch('/api/users/me/firebase-token', {token});
+};
+
+/**
+ * 사용자의 역할을 업데이트합니다.
+ * @param role 변경할 역할 ('GUARDIAN' 또는 'ADMIN')
+ */
+export const updateUserRole = async (
+  role: 'GUARDIAN' | 'ADMIN',
+): Promise<User> => {
+  const response = await apiClient.patch<User>('/api/users/me/role', {role});
+  return response.data;
+};
+
+/**
+ * 사용자를 탈퇴시킵니다.
+ */
+export const deleteUser = async (): Promise<void> => {
+  await apiClient.delete('/api/users/me');
+};

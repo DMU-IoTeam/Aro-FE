@@ -14,8 +14,8 @@ const getAccessToken = async (): Promise<string | null> => {
 };
 
 // 플랫폼에 따라 다른 localhost 주소를 사용
-const baseURL =
-  Platform.OS === 'ios' ? 'http://localhost:8080' : 'http://10.0.2.2:8080';
+const baseURL = 'http://10.0.2.2:8080';
+// const baseURL = 'http://localhost:8080' 
 
 const apiClient = axios.create({
   baseURL: baseURL,

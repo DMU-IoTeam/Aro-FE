@@ -7,7 +7,7 @@ import notifee, {AndroidImportance} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API
-import {getMe} from './api/user';
+import {getMe, registerFcmToken} from './api/user';
 
 // Firebase Modular API import
 import {app} from './firebase-config';
@@ -31,6 +31,7 @@ import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
 import CalendarScreen from './screen/CalendarScreen';
+import { getSeniors } from './api/senior';
 
 const Stack = createNativeStackNavigator();
 
@@ -91,6 +92,10 @@ function App(): React.JSX.Element {
         const messaging = getMessaging(app);
         const token = await getToken(messaging);
         console.log('✅ FCM Token:', token);
+        if (token) {
+          await registerFcmToken(token);
+          console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
+        }
       } catch (error) {
         console.error('FCM setup error:', error);
       }
@@ -120,8 +125,8 @@ function App(): React.JSX.Element {
     const checkAuthStatus = async () => {
       try {
         const token = await AsyncStorage.getItem('accessToken');
+        console.log('--- App.tsx: 앱 시작 시 AsyncStorage에서 토큰 확인 ---', token);
         if (token) {
-          console.log('저장된 토큰:', token);
           // 토큰이 있으면, 유효성 검증 API 호출
           await getMe();
           // API 호출이 성공하면 (에러가 발생하지 않으면) 메인 화면으로 설정

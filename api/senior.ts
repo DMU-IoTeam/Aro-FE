@@ -14,7 +14,8 @@ export interface Senior {
 export const getSeniors = async (): Promise<Senior[]> => {
   try {
     // TODO: 실제 API 엔드포인트로 수정하세요. (예: '/api/v1/seniors')
-    const response = await apiClient.get('/seniors');
+    const response = await apiClient.get('/api/users/seniors');
+    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Error fetching seniors:', error);
@@ -51,37 +52,6 @@ export const getSeniorById = async (seniorId: number): Promise<Senior> => {
 };
 
 /**
- * 새로운 노인 정보를 추가합니다.
- * @param seniorData - 추가할 노인의 정보
- */
-export const addSenior = async (seniorData: Omit<Senior, 'id'>): Promise<Senior> => {
-  try {
-    // TODO: 실제 API 엔드포인트로 수정하세요.
-    const response = await apiClient.post('/seniors', seniorData);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding senior:', error);
-    throw error;
-  }
-};
-
-/**
- * 기존 노인 정보를 수정합니다.
- * @param seniorId - 수정할 노인의 ID
- * @param seniorData - 수정할 노인의 정보
- */
-export const updateSenior = async (seniorId: number, seniorData: Partial<Senior>): Promise<Senior> => {
-  try {
-    // TODO: 실제 API 엔드포인트로 수정하세요.
-    const response = await apiClient.put(`/seniors/${seniorId}`, seniorData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating senior with id ${seniorId}:`, error);
-    throw error;
-  }
-};
-
-/**
  * 특정 ID의 노인 정보를 삭제합니다.
  * @param seniorId - 삭제할 노인의 ID
  */
@@ -91,6 +61,36 @@ export const deleteSenior = async (seniorId: number): Promise<void> => {
     await apiClient.delete(`/seniors/${seniorId}`);
   } catch (error) {
     console.error(`Error deleting senior with id ${seniorId}:`, error);
+    throw error;
+  }
+};
+
+export interface RegisterSeniorPayload {
+  name: string;
+  birthDate: string;
+  gender: string;
+  address: string;
+  medicalHistory: string;
+  bloodType: string;
+  profileImage: string;
+}
+
+/**
+ * 새로운 보호 대상자(노인)를 등록합니다.
+ */
+export const registerSenior = async (
+  payload: RegisterSeniorPayload,
+): Promise<Senior> => {
+  console.log(payload)
+  console.log(process.env.REACT_APP_API_BASE_URL)
+  try {
+    const response = await apiClient.post<Senior>(
+      '/api/users/register-senior',
+      payload,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error registering senior:', error);
     throw error;
   }
 };
