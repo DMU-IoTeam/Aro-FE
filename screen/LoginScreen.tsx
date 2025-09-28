@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Modal, Button, View, Platform} from 'react-native';
+import {Modal, Button, View, Platform, Pressable, Image} from 'react-native';
 import {WebView} from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
@@ -53,7 +53,9 @@ const LoginScreen = () => {
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Button title="카카오 로그인" onPress={() => setIsModalVisible(true)} />
+      <Pressable onPress={() => setIsModalVisible(true)} >
+        <Image source={require('../assets/kakao-login.png')} />
+      </Pressable>
       <Modal
         visible={isModalVisible}
         onRequestClose={() => setIsModalVisible(false)}>

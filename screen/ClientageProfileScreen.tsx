@@ -35,8 +35,14 @@ const ClientageProfileScreen = () => {
     }
 
     try {
-      formData.profileImage = 'default';
-      await registerSenior(formData);
+      const payload = {...formData};
+      if (payload.gender === '남성') {
+        payload.gender = 'MALE';
+      } else if (payload.gender === '여성') {
+        payload.gender = 'FEMALE';
+      }
+      payload.profileImage = 'default';
+      await registerSenior(payload);
       Alert.alert('성공', '피보호자 등록이 완료되었습니다.', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
