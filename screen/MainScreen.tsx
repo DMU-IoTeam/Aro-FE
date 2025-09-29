@@ -25,24 +25,27 @@ const MainScreen = () => {
   const [error, setError] = useState<Error | null>(null);
 
   function calculateAge(birthDateString) {
-  // 1. 입력받은 생년월일 문자열과 현재 날짜로 Date 객체를 생성합니다.
-  const birthDate = new Date(birthDateString);
-  const today = new Date();
+    // 1. 입력받은 생년월일 문자열과 현재 날짜로 Date 객체를 생성합니다.
+    const birthDate = new Date(birthDateString);
+    const today = new Date();
 
-  // 2. 현재 연도와 생년의 차이로 기본 나이를 계산합니다.
-  let age = today.getFullYear() - birthDate.getFullYear();
+    // 2. 현재 연도와 생년의 차이로 기본 나이를 계산합니다.
+    let age = today.getFullYear() - birthDate.getFullYear();
 
-  // 3. 월과 일을 비교하여 생일이 지났는지 확인합니다.
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-  
-  // 생일이 아직 지나지 않은 경우 (월이 더 이르거나, 월은 같지만 일이 더 이른 경우)
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-    // 나이에서 1을 뺍니다.
-    age--;
+    // 3. 월과 일을 비교하여 생일이 지났는지 확인합니다.
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+
+    // 생일이 아직 지나지 않은 경우 (월이 더 이르거나, 월은 같지만 일이 더 이른 경우)
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      // 나이에서 1을 뺍니다.
+      age--;
+    }
+
+    return age;
   }
-
-  return age;
-}
 
   useEffect(() => {
     const fetchMySeniors = async () => {
@@ -102,9 +105,13 @@ const MainScreen = () => {
           />
           <View style={{justifyContent: 'space-between'}}>
             <Text style={styles.profileText}>{seniors[0].name}님</Text>
-            <Text style={styles.profileText}>{calculateAge(seniors[0].birthDate)}세</Text>
+            <Text style={styles.profileText}>
+              {calculateAge(seniors[0].birthDate)}세
+            </Text>
             {/* 병력 정보는 API에 추가되면 표시할 수 있습니다. */}
-            <Text style={styles.profileText}>병력: {seniors[0].medicalHistory}</Text>
+            <Text style={styles.profileText}>
+              병력: {seniors[0].medicalHistory}
+            </Text>
           </View>
         </Pressable>
       ) : (
@@ -151,8 +158,14 @@ const MainScreen = () => {
           시리얼 넘버: q1w2e3r4t5
         </Text>
       </Pressable>
+      {/* <Pressable style={styles.robotStatusContainer}>
+        <Image
+          source={require('../assets/plus.png')} // 이미지는 일단 그대로 둡니다.
+        />
+        <Text style={styles.beforeProfileText}>Aro 등록하기</Text>
+      </Pressable> */}
 
-        {/* <CommonButton onPress={() => navigateHandler('CalendarScreen')}>
+      {/* <CommonButton onPress={() => navigateHandler('CalendarScreen')}>
           캘린더
         </CommonButton> */}
     </Container>
@@ -214,7 +227,13 @@ const styles = StyleSheet.create({
   },
   robotStatusContainer: {
     borderRadius: 10,
-    backgroundColor: COLOR.DEFAULT_COLOR,
     padding: 8,
+    backgroundColor: COLOR.DEFAULT_COLOR,
+    // borderColor: COLOR.DEFAULT_COLOR,
+    // borderWidth: 1,
+    // flexDirection: 'row',
+    // justifyContent: 'center',
+    // alignItems: 'center',
+    // gap: 8,
   },
 });

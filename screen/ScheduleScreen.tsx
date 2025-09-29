@@ -3,14 +3,11 @@ import {StyleSheet, View, FlatList, Pressable} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faSquare, faSquareCheck} from '@fortawesome/free-regular-svg-icons';
 import {useNavigation} from '@react-navigation/native';
-import {useRecoilState} from 'recoil';
-import {medicineTimeState} from '../store/medicine.store';
 import COLOR from '../constants/color';
 import Container from '../layouts/Container';
 import layout from '../constants/layout';
 
 const ScheduleScreen = () => {
-  //   const [medicineTime, setMedicineTime] = useRecoilState(medicineTimeState);
   const workTime = [
     {
       time: '06:00',
@@ -27,7 +24,7 @@ const ScheduleScreen = () => {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   const navigation = useNavigation();
-  //   console.log(medicineTime);
+
   return (
     <Container>
       {/* 요일 */}
@@ -74,7 +71,7 @@ const ScheduleScreen = () => {
           <Text
             style={{
               color: 'white',
-              fontWeight: 700,
+              fontWeight: '700',
               fontSize: 24,
               lineHeight: 40,
             }}>
@@ -92,7 +89,7 @@ const ScheduleScreen = () => {
             work={item.work}
           />
         )}
-        keyExtractor={(item, index) => index}></FlatList>
+        keyExtractor={(item, index) => index.toString()}></FlatList>
     </Container>
   );
 };
@@ -100,7 +97,7 @@ const ScheduleScreen = () => {
 type MedicineScheduleItemProps = {
   time: string;
   isAm: boolean;
-  medicine: object[]; // 타입 명확하면 object 대신 구체적으로!
+  work: string;
 };
 
 const MedicineScheduleItem = ({

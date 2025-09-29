@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {RecoilRoot} from 'recoil';
 import {Alert, View, ActivityIndicator} from 'react-native';
 import notifee, {AndroidImportance} from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -68,7 +67,7 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
         name="ClientageProfileScreen"
         component={ClientageProfileScreen}
       />
-      <Stack.Screen name="CalendarScreen" component={CalendarScreen} />
+      {/* <Stack.screen name="CalendarScreen" component={CalendarScreen} /> */}
     </Stack.Navigator>
   );
 }
@@ -86,23 +85,23 @@ function App(): React.JSX.Element {
     });
   }
 
-  useEffect(() => {
-    async function setupFCM() {
-      try {
-        const messaging = getMessaging(app);
-        const token = await getToken(messaging);
-        console.log('✅ FCM Token:', token);
-        if (token) {
-          await registerFcmToken(token);
-          console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
-        }
-      } catch (error) {
-        console.error('FCM setup error:', error);
-      }
-    }
-    setupFCM();
-    createChannel();
-  }, []);
+  // useEffect(() => {
+  //   async function setupFCM() {
+  //     try {
+  //       const messaging = getMessaging(app);
+  //       const token = await getToken(messaging);
+  //       console.log('✅ FCM Token:', token);
+  //       if (token) {
+  //         await registerFcmToken(token);
+  //         console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
+  //       }
+  //     } catch (error) {
+  //       console.error('FCM setup error:', error);
+  //     }
+  //   }
+  //   setupFCM();
+  //   createChannel();
+  // }, []);
 
   useEffect(() => {
     const messaging = getMessaging(app);
@@ -159,11 +158,9 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <RecoilRoot>
-      <NavigationContainer>
-        <RootStack initialRouteName={initialRoute} />
-      </NavigationContainer>
-    </RecoilRoot>
+    <NavigationContainer>
+      <RootStack initialRouteName={initialRoute} />
+    </NavigationContainer>
   );
 }
 

@@ -3,51 +3,23 @@ import {StyleSheet, View, FlatList, Pressable} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faSquare, faSquareCheck} from '@fortawesome/free-regular-svg-icons';
 import {useNavigation} from '@react-navigation/native';
-import {useRecoilState} from 'recoil';
-import {medicineTimeState} from '../store/medicine.store';
+import {useMedicineTimeStore} from '../store/medicine.store';
 import COLOR from '../constants/color';
 import Container from '../layouts/Container';
 import layout from '../constants/layout';
 
 const MedicineTimeScreen = () => {
-  //   const [medicineTime, setMedicineTime] = useRecoilState(medicineTimeState);
-  const medicineTime = [
-    {
-      time: '06:00',
-      isAm: true,
-      medicine: [
-        {name: '당뇨약', taking: true},
-        {name: '고혈압약', taking: false},
-      ],
-    },
-    {
-      time: '12:00',
-      isAm: false,
-      medicine: [
-        {name: '당뇨약', taking: true},
-        {name: '고혈압약', taking: false},
-      ],
-    },
-    {
-      time: '06:00',
-      isAm: false,
-      medicine: [
-        {name: '당뇨약', taking: true},
-        {name: '고혈압약', taking: false},
-      ],
-    },
-  ];
+  const {medicineTime, toggleMedicineTaking} = useMedicineTimeStore();
 
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   const navigation = useNavigation();
-  //   console.log(medicineTime);
+
   return (
     <Container>
       {/* 요일 */}
       <View style={{flexDirection: 'row'}}>
         {days.map((item, index) => {
-          // console.log(item);
           return (
             <View
               key={index}
@@ -88,7 +60,7 @@ const MedicineTimeScreen = () => {
           <Text
             style={{
               color: 'white',
-              fontWeight: 700,
+              fontWeight: '700',
               fontSize: 24,
               lineHeight: 40,
             }}>
@@ -104,23 +76,31 @@ const MedicineTimeScreen = () => {
             time={item.time}
             isAm={item.isAm}
             medicine={item.medicine}
+            toggleMedicineTaking={toggleMedicineTaking}
           />
         )}
-        keyExtractor={(item, index) => index}></FlatList>
+        keyExtractor={(item, index) => index.toString()}></FlatList>
     </Container>
   );
 };
 
+interface Medicine {
+  name: string;
+  taking: boolean;
+}
+
 type MedicineScheduleItemProps = {
   time: string;
   isAm: boolean;
-  medicine: object[]; // 타입 명확하면 object 대신 구체적으로!
+  medicine: Medicine[];
+  toggleMedicineTaking: (time: string, medicineName: string) => void;
 };
 
 export const MedicineScheduleItem = ({
   time,
   isAm,
   medicine,
+  toggleMedicineTaking,
 }: MedicineScheduleItemProps) => {
   return (
     <View
@@ -150,7 +130,8 @@ export const MedicineScheduleItem = ({
       <View style={{gap: 8, paddingHorizontal: 5, paddingVertical: 8}}>
         {medicine.map((item, index) => {
           return (
-            <View
+            <Pressable
+              onPress={() => toggleMedicineTaking(time, item.name)}
               style={{
                 flexDirection: 'row',
                 gap: 4,
@@ -170,7 +151,7 @@ export const MedicineScheduleItem = ({
                 <FontAwesomeIcon icon={faSquare} size={18} />
               )}
               <Text style={{fontSize: 18, lineHeight: 18}}>{item.name}</Text>
-            </View>
+            </Pressable>
           );
         })}
       </View>

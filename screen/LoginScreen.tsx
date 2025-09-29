@@ -1,5 +1,13 @@
 import React, {useState} from 'react';
-import {Modal, Button, View, Platform, Pressable, Image} from 'react-native';
+import {
+  Modal,
+  Button,
+  View,
+  Platform,
+  Pressable,
+  Image,
+  StyleSheet,
+} from 'react-native';
 import {WebView} from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
@@ -52,8 +60,18 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Pressable onPress={() => setIsModalVisible(true)} >
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        paddingTop: 100,
+        backgroundColor: '#FF936530',
+      }}>
+      <Image
+        source={require('../assets/aro.png')}
+        style={{width: 200, height: 300, resizeMode: 'contain'}}
+      />
+      <Pressable onPress={() => setIsModalVisible(true)}>
         <Image source={require('../assets/kakao-login.png')} />
       </Pressable>
       <Modal
