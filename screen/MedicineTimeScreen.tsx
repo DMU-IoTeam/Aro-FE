@@ -115,17 +115,32 @@ export const MedicineScheduleItem = ({
       {/* 시간 */}
       <View
         style={{
-          flexDirection: 'row',
           borderBottomColor: 'gray',
           borderBottomWidth: 1,
-          alignItems: 'flex-end',
           gap: 8,
           padding: 5,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
         }}>
-        <Text style={{fontSize: 24, lineHeight: 24}}>{time}</Text>
-        <Text style={{fontSize: 16}}>{isAm ? '오전' : '오후'}</Text>
-      </View>
+        <View style={{flexDirection: 'row', alignItems: 'flex-end', gap: 8}}>
+          <Text style={{fontSize: 24, lineHeight: 24}}>{time}</Text>
+          <Text style={{fontSize: 16}}>{isAm ? '오전' : '오후'}</Text>
+        </View>
 
+        <Pressable
+          style={{
+            backgroundColor: COLOR.DEFAULT_COLOR,
+            borderRadius: 9999,
+            width: 32,
+            height: 32,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => {
+          }}>
+          <Text style={{fontSize: 28, color: 'white', fontWeight: 700, lineHeight: 28}}>-</Text>
+        </Pressable>
+      </View>
       {/* 약 */}
       <View style={{gap: 8, paddingHorizontal: 5, paddingVertical: 8}}>
         {medicine.map((item, index) => {
