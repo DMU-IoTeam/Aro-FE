@@ -1,12 +1,23 @@
 import React, {useState} from 'react';
-import {StyleSheet, View, Alert, ScrollView} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Alert,
+  ScrollView,
+  Text,
+  Pressable,
+  Image,
+} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Container from '../layouts/Container';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
 import {registerSenior, RegisterSeniorPayload} from '../api/senior';
+import COLOR from '../constants/color';
+import layout from '../constants/layout';
+import {launchImageLibrary, Asset} from 'react-native-image-picker';
 
-const initialFormData: RegisterSeniorPayload = {
+const initialFormData: Omit<RegisterSeniorPayload, 'profileImage'> = {
   name: '',
   birthDate: '',
   gender: '',
@@ -17,26 +28,50 @@ const initialFormData: RegisterSeniorPayload = {
 
 const ClientageProfileScreen = () => {
   const navigation = useNavigation();
-  const [formData, setFormData] =
-    useState<RegisterSeniorPayload>(initialFormData);
+  const [formData, setFormData] = useState(initialFormData);
+  const [imageSource, setImageSource] = useState<Asset | null>(null);
+
+  const selectImageHandler = () => {
+    console.log("clicked")
+    launchImageLibrary({mediaType: 'photo'}, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        setImageSource(response.assets[0]);
+      }
+    });
+  };
 
   const handleInputChange = (
-    field: keyof RegisterSeniorPayload,
+    field: keyof typeof initialFormData,
     value: string,
   ) => {
     setFormData(prev => ({...prev, [field]: value}));
   };
 
   const handleRegister = async () => {
-    // 간단한 유효성 검사
     if (!formData.name || !formData.birthDate) {
       Alert.alert('오류', '이름과 생년월일은 필수 항목입니다.');
       return;
     }
 
+    const payload = new FormData();
+    Object.keys(formData).forEach(key => {
+      payload.append(key, formData[key as keyof typeof formData]);
+    });
+
+    if (imageSource && imageSource.uri) {
+      payload.append('profileImage', {
+        uri: imageSource.uri,
+        name: imageSource.fileName,
+        type: imageSource.type,
+      });
+    }
+
     try {
-      formData.profileImage = 'default';
-      await registerSenior(formData);
+      await registerSenior(payload);
       Alert.alert('성공', '피보호자 등록이 완료되었습니다.', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
@@ -50,6 +85,38 @@ const ClientageProfileScreen = () => {
     <Container>
       <ScrollView>
         <View style={{marginTop: 36}}>
+          <View
+            style={{
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+            <Text style={{fontSize: 20}}>피보호자 사진</Text>
+            <Pressable
+              onPress={selectImageHandler}
+              style={{
+                borderRadius: layout.BORDER_RADIUS,
+                borderWidth: 1,
+                borderColor: COLOR.DEFAULT_COLOR,
+                width: 150,
+                height: 150,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 32,
+              }}>
+              {imageSource?.uri ? (
+                <Image
+                  source={{uri: imageSource.uri}}
+                  style={{width: '100%', height: '100%', borderRadius: layout.BORDER_RADIUS}}
+                />
+              ) : (
+                <Text style={{fontSize: 24, color: COLOR.DEFAULT_COLOR}}>
+                  +
+                </Text>
+              )}
+            </Pressable>
+          </View>
+
           <Input
             placeholder="이름"
             style={styles.inputLayout}

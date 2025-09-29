@@ -79,7 +79,7 @@ export interface RegisterSeniorPayload {
  * 새로운 보호 대상자(노인)를 등록합니다.
  */
 export const registerSenior = async (
-  payload: RegisterSeniorPayload,
+  payload: FormData,
 ): Promise<Senior> => {
   console.log(payload)
   console.log(process.env.REACT_APP_API_BASE_URL)
@@ -87,6 +87,11 @@ export const registerSenior = async (
     const response = await apiClient.post<Senior>(
       '/api/users/register-senior',
       payload,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
     );
     return response.data;
   } catch (error) {
