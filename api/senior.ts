@@ -29,6 +29,7 @@ export const getSeniors = async (): Promise<Senior[]> => {
 export const getMySeniors = async (): Promise<Senior[]> => {
   try {
     const response = await apiClient.get<Senior[]>('/api/users/seniors');
+    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Error fetching my seniors:', error);

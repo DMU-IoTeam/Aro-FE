@@ -27,7 +27,7 @@ const MedicineTimeSettingScreen = () => {
   const [ampmIndex, setAmPmIndex] = useState(0);
 
   const [medicineName, setMedicineName] = useState('');
-  const [medicineArray, setMedicineArray] = useState([]);
+  const [medicineArray, setMedicineArray] = useState(["고혈압약"]);
 console.log(repeatedHours)
 
   // 끝에 다다르면 중앙으로 다시 보내는 무한 스크롤 트릭

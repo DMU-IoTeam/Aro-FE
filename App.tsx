@@ -85,23 +85,23 @@ function App(): React.JSX.Element {
     });
   }
 
-  // useEffect(() => {
-  //   async function setupFCM() {
-  //     try {
-  //       const messaging = getMessaging(app);
-  //       const token = await getToken(messaging);
-  //       console.log('✅ FCM Token:', token);
-  //       if (token) {
-  //         await registerFcmToken(token);
-  //         console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
-  //       }
-  //     } catch (error) {
-  //       console.error('FCM setup error:', error);
-  //     }
-  //   }
-  //   setupFCM();
-  //   createChannel();
-  // }, []);
+  useEffect(() => {
+    async function setupFCM() {
+      try {
+        const messaging = getMessaging(app);
+        const token = await getToken(messaging);
+        console.log('✅ FCM Token:', token);
+        if (token) {
+          await registerFcmToken(token);
+          console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
+        }
+      } catch (error) {
+        console.error('FCM setup error:', error);
+      }
+    }
+    setupFCM();
+    createChannel();
+  }, []);
 
   useEffect(() => {
     const messaging = getMessaging(app);

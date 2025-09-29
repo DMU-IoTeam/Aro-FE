@@ -6,6 +6,7 @@ interface Medicine {
 }
 
 interface MedicineTime {
+  id: number;
   time: string;
   isAm: boolean;
   medicine: Medicine[];
@@ -13,12 +14,14 @@ interface MedicineTime {
 
 interface MedicineTimeState {
   medicineTime: MedicineTime[];
-  toggleMedicineTaking: (time: string, medicineName: string) => void;
+  toggleMedicineTaking: (id: number, medicineName: string) => void;
+  removeMedicineTime: (id: number) => void;
 }
 
 export const useMedicineTimeStore = create<MedicineTimeState>(set => ({
   medicineTime: [
     {
+      id: 1,
       time: '06:00',
       isAm: true,
       medicine: [
@@ -27,6 +30,7 @@ export const useMedicineTimeStore = create<MedicineTimeState>(set => ({
       ],
     },
     {
+      id: 2,
       time: '12:00',
       isAm: false,
       medicine: [
@@ -35,6 +39,7 @@ export const useMedicineTimeStore = create<MedicineTimeState>(set => ({
       ],
     },
     {
+      id: 3,
       time: '06:00',
       isAm: false,
       medicine: [
@@ -43,10 +48,10 @@ export const useMedicineTimeStore = create<MedicineTimeState>(set => ({
       ],
     },
   ],
-  toggleMedicineTaking: (time, medicineName) =>
+  toggleMedicineTaking: (id, medicineName) =>
     set(state => ({
       medicineTime: state.medicineTime.map(item => {
-        if (item.time === time) {
+        if (item.id === id) {
           return {
             ...item,
             medicine: item.medicine.map(med => {
@@ -59,5 +64,9 @@ export const useMedicineTimeStore = create<MedicineTimeState>(set => ({
         }
         return item;
       }),
+    })),
+  removeMedicineTime: id =>
+    set(state => ({
+      medicineTime: state.medicineTime.filter(item => item.id !== id),
     })),
 }));

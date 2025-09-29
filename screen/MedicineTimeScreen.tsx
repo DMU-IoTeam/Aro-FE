@@ -9,7 +9,8 @@ import Container from '../layouts/Container';
 import layout from '../constants/layout';
 
 const MedicineTimeScreen = () => {
-  const {medicineTime, toggleMedicineTaking} = useMedicineTimeStore();
+  const {medicineTime, toggleMedicineTaking, removeMedicineTime} =
+    useMedicineTimeStore();
 
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -73,13 +74,15 @@ const MedicineTimeScreen = () => {
         data={medicineTime}
         renderItem={({item}) => (
           <MedicineScheduleItem
+            id={item.id}
             time={item.time}
             isAm={item.isAm}
             medicine={item.medicine}
             toggleMedicineTaking={toggleMedicineTaking}
+            removeMedicineTime={removeMedicineTime}
           />
         )}
-        keyExtractor={(item, index) => index.toString()}></FlatList>
+        keyExtractor={item => item.id.toString()}></FlatList>
     </Container>
   );
 };
@@ -90,17 +93,21 @@ interface Medicine {
 }
 
 type MedicineScheduleItemProps = {
+  id: number;
   time: string;
   isAm: boolean;
   medicine: Medicine[];
-  toggleMedicineTaking: (time: string, medicineName: string) => void;
+  toggleMedicineTaking: (id: number, medicineName: string) => void;
+  removeMedicineTime: (id: number) => void;
 };
 
 export const MedicineScheduleItem = ({
+  id,
   time,
   isAm,
   medicine,
   toggleMedicineTaking,
+  removeMedicineTime,
 }: MedicineScheduleItemProps) => {
   return (
     <View
@@ -136,9 +143,16 @@ export const MedicineScheduleItem = ({
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          onPress={() => {
-          }}>
-          <Text style={{fontSize: 28, color: 'white', fontWeight: 700, lineHeight: 28}}>-</Text>
+          onPress={() => removeMedicineTime(id)}>
+          <Text
+            style={{
+              fontSize: 28,
+              color: 'white',
+              fontWeight: '700',
+              lineHeight: 28,
+            }}>
+            -
+          </Text>
         </Pressable>
       </View>
       {/* 약 */}
@@ -146,7 +160,7 @@ export const MedicineScheduleItem = ({
         {medicine.map((item, index) => {
           return (
             <Pressable
-              onPress={() => toggleMedicineTaking(time, item.name)}
+              onPress={() => toggleMedicineTaking(id, item.name)}
               style={{
                 flexDirection: 'row',
                 gap: 4,
