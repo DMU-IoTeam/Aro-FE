@@ -1,5 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {
+  NavigationContainer,
+  useNavigationContainerRef,
+} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {Alert, View, ActivityIndicator} from 'react-native';
 import notifee, {AndroidImportance} from '@notifee/react-native';
@@ -30,7 +33,7 @@ import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
 import CalendarScreen from './screen/CalendarScreen';
-import { getSeniors } from './api/senior';
+import {getSeniors} from './api/senior';
 
 const Stack = createNativeStackNavigator();
 
@@ -75,6 +78,7 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
 function App(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState('LoginScreen');
+  const navigationRef = useNavigationContainerRef();
 
   // --- FCM 및 채널 설정 useEffect (기존 코드) ---
   async function createChannel() {
@@ -114,6 +118,9 @@ function App(): React.JSX.Element {
           channelId: 'default',
         },
       });
+      if (navigationRef.isReady()) {
+        navigationRef.navigate('FallDetectionScreen');
+      }
     });
     return unsubscribe;
   }, []);
@@ -124,7 +131,10 @@ function App(): React.JSX.Element {
     const checkAuthStatus = async () => {
       try {
         const token = await AsyncStorage.getItem('accessToken');
-        console.log('--- App.tsx: 앱 시작 시 AsyncStorage에서 토큰 확인 ---', token);
+        console.log(
+          '--- App.tsx: 앱 시작 시 AsyncStorage에서 토큰 확인 ---',
+          token,
+        );
         if (token) {
           // 토큰이 있으면, 유효성 검증 API 호출
           await getMe();
@@ -158,7 +168,7 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <RootStack initialRouteName={initialRoute} />
     </NavigationContainer>
   );
