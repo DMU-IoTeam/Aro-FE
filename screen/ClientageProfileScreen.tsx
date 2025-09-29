@@ -51,15 +51,23 @@ const ClientageProfileScreen = () => {
     setFormData(prev => ({...prev, [field]: value}));
   };
 
-  const handleRegister = async () => {
+    const handleRegister = async () => {
     if (!formData.name || !formData.birthDate) {
       Alert.alert('오류', '이름과 생년월일은 필수 항목입니다.');
       return;
     }
 
     const payload = new FormData();
-    Object.keys(formData).forEach(key => {
-      payload.append(key, formData[key as keyof typeof formData]);
+    const dataToSend = {...formData};
+
+    if (dataToSend.gender === '남성') {
+      dataToSend.gender = 'MALE';
+    } else if (dataToSend.gender === '여성') {
+      dataToSend.gender = 'FEMALE';
+    }
+
+    Object.keys(dataToSend).forEach(key => {
+      payload.append(key, dataToSend[key as keyof typeof dataToSend]);
     });
 
     if (imageSource && imageSource.uri) {
@@ -68,6 +76,8 @@ const ClientageProfileScreen = () => {
         name: imageSource.fileName,
         type: imageSource.type,
       });
+    } else {
+      payload.append('profileImage', 'default');
     }
 
     try {

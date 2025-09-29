@@ -1,3 +1,6 @@
+// ---------------------------------------------------
+// --- 메인 화면 ---------------------------------------
+// ---------------------------------------------------
 import React, {useState, useEffect} from 'react';
 import {
   Pressable,
@@ -95,7 +98,7 @@ const MainScreen = () => {
           }}>
           <Image
             style={styles.profileImage}
-            source={require('../assets/senior.png')} // 이미지는 일단 그대로 둡니다.
+            source={require('../assets/senior-female.jpg')} // 이미지는 일단 그대로 둡니다.
           />
           <View style={{justifyContent: 'space-between'}}>
             <Text style={styles.profileText}>{seniors[0].name}님</Text>
@@ -149,18 +152,9 @@ const MainScreen = () => {
         </Text>
       </Pressable>
 
-      {/* 임시~ */}
-      <View style={{flexDirection: 'row', gap: 24, marginTop: 24}}>
-        <CommonButton onPress={() => navigateHandler('LoginScreen')}>
-          로그인
-        </CommonButton>
-        <CommonButton onPress={() => navigateHandler('SignupScreen')}>
-          회원가입
-        </CommonButton>
-        <CommonButton onPress={() => navigateHandler('CalendarScreen')}>
+        {/* <CommonButton onPress={() => navigateHandler('CalendarScreen')}>
           캘린더
-        </CommonButton>
-      </View>
+        </CommonButton> */}
     </Container>
   );
 };
