@@ -22,6 +22,8 @@ import ClientageProfileScreen from './screen/ClientageProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
+import CalendarScreen from './screen/CalendarScreen';
+import { getSeniors } from './api/senior';
 
 const Stack = createNativeStackNavigator();
 
