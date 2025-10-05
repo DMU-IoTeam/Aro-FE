@@ -1,11 +1,14 @@
 import apiClient from './index';
 
-// 참고: 서버의 실제 데이터 모델에 맞게 수정이 필요합니다.
 export interface Senior {
   id: number;
   name: string;
-  age: number;
-  // 기타 필요한 속성들...
+  birthDate: string;
+  medicalHistory: string;
+  gender?: string;
+  address?: string;
+  bloodType?: string;
+  profileImage?: string;
 }
 
 /**

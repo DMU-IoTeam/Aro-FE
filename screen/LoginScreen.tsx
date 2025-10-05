@@ -34,9 +34,7 @@ const LoginScreen = () => {
       if (token) {
         console.log('추출된 JWT 토큰:', token);
         try {
-          console.log('토큰 저장 성공~~~~~~');
           await AsyncStorage.setItem('accessToken', token);
-          console.log('토큰 저장 성공');
           navigation.replace('MainScreen'); // 메인 화면으로 이동
         } catch (e) {
           console.error('토큰 저장 실패', e);

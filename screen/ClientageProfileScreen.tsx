@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect} from 'react';
 import {
   StyleSheet,
   View,
@@ -12,27 +12,51 @@ import {useNavigation} from '@react-navigation/native';
 import Container from '../layouts/Container';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
-import {registerSenior, RegisterSeniorPayload} from '../api/senior';
+import {useSeniorStore} from '../store/senior.store';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
-import {launchImageLibrary, Asset} from 'react-native-image-picker';
-
-const initialFormData: Omit<RegisterSeniorPayload, 'profileImage'> = {
-  name: '',
-  birthDate: '',
-  gender: '',
-  address: '',
-  medicalHistory: '',
-  bloodType: '',
-};
+import {launchImageLibrary} from 'react-native-image-picker';
 
 const ClientageProfileScreen = () => {
   const navigation = useNavigation();
-  const [formData, setFormData] = useState(initialFormData);
-  const [imageSource, setImageSource] = useState<Asset | null>(null);
+  const {
+    seniors,
+    formData,
+    imageSource,
+    displayImageUri,
+    setFormData,
+    setFullFormData,
+    setImageSource,
+    setDisplayImageUri,
+    clearForm,
+    registerSenior,
+  } = useSeniorStore();
+
+  useEffect(() => {
+    if (seniors.length > 0) {
+      const seniorToEdit = seniors[0];
+      const formValues = {
+        name: seniorToEdit.name,
+        birthDate: seniorToEdit.birthDate,
+        gender: seniorToEdit.gender || '',
+        address: seniorToEdit.address || '',
+        medicalHistory: seniorToEdit.medicalHistory,
+        bloodType: seniorToEdit.bloodType || '',
+      };
+      setFullFormData(formValues);
+
+      if (seniorToEdit.profileImage) {
+        setDisplayImageUri(seniorToEdit.profileImage);
+      }
+    }
+
+    // 컴포넌트가 언마운트될 때 폼 데이터를 초기화합니다.
+    return () => {
+      clearForm();
+    };
+  }, [seniors, setFullFormData, setDisplayImageUri, clearForm]);
 
   const selectImageHandler = () => {
-    console.log("clicked")
     launchImageLibrary({mediaType: 'photo'}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
@@ -44,14 +68,7 @@ const ClientageProfileScreen = () => {
     });
   };
 
-  const handleInputChange = (
-    field: keyof typeof initialFormData,
-    value: string,
-  ) => {
-    setFormData(prev => ({...prev, [field]: value}));
-  };
-
-    const handleRegister = async () => {
+  const handleRegister = async () => {
     if (!formData.name || !formData.birthDate) {
       Alert.alert('오류', '이름과 생년월일은 필수 항목입니다.');
       return;
@@ -77,19 +94,23 @@ const ClientageProfileScreen = () => {
         type: imageSource.type,
       });
     } else {
+      // 기존 이미지를 유지하거나, 기본 이미지로 설정하는 로직이 필요할 수 있습니다.
+      // 여기서는 새 이미지를 선택하지 않으면 'default'를 보냅니다.
       payload.append('profileImage', 'default');
     }
 
     try {
       await registerSenior(payload);
-      Alert.alert('성공', '피보호자 등록이 완료되었습니다.', [
+      Alert.alert('성공', '피보호자 정보가 저장되었습니다.', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
     } catch (error) {
       console.error(error);
-      Alert.alert('오류', '등록 중 문제가 발생했습니다.');
+      Alert.alert('오류', '저장 중 문제가 발생했습니다.');
     }
   };
+
+  const isEditing = seniors.length > 0;
 
   return (
     <Container>
@@ -114,10 +135,14 @@ const ClientageProfileScreen = () => {
                 alignItems: 'center',
                 marginBottom: 32,
               }}>
-              {imageSource?.uri ? (
+              {displayImageUri ? (
                 <Image
-                  source={{uri: imageSource.uri}}
-                  style={{width: '100%', height: '100%', borderRadius: layout.BORDER_RADIUS}}
+                  source={{uri: displayImageUri}}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: layout.BORDER_RADIUS,
+                  }}
                 />
               ) : (
                 <Text style={{fontSize: 24, color: COLOR.DEFAULT_COLOR}}>
@@ -131,31 +156,31 @@ const ClientageProfileScreen = () => {
             placeholder="이름"
             style={styles.inputLayout}
             value={formData.name}
-            onChangeText={text => handleInputChange('name', text)}
+            onChangeText={text => setFormData('name', text)}
           />
           <Input
             placeholder="생년월일 (예: 1950-01-01)"
             style={styles.inputLayout}
             value={formData.birthDate}
-            onChangeText={text => handleInputChange('birthDate', text)}
+            onChangeText={text => setFormData('birthDate', text)}
           />
           <Input
             placeholder="성별 (예: 남성/여성)"
             style={styles.inputLayout}
             value={formData.gender}
-            onChangeText={text => handleInputChange('gender', text)}
+            onChangeText={text => setFormData('gender', text)}
           />
           <Input
             placeholder="주소"
             style={styles.inputLayout}
             value={formData.address}
-            onChangeText={text => handleInputChange('address', text)}
+            onChangeText={text => setFormData('address', text)}
           />
           <Input
             placeholder="병력"
             style={styles.inputLayout}
             value={formData.medicalHistory}
-            onChangeText={text => handleInputChange('medicalHistory', text)}
+            onChangeText={text => setFormData('medicalHistory', text)}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
@@ -164,12 +189,14 @@ const ClientageProfileScreen = () => {
             placeholder="혈액형 (예: A+)"
             style={styles.inputLayout}
             value={formData.bloodType}
-            onChangeText={text => handleInputChange('bloodType', text)}
+            onChangeText={text => setFormData('bloodType', text)}
           />
         </View>
 
         <View style={{marginTop: 10}}>
-          <CommonButton onPress={handleRegister}>피보호자 추가</CommonButton>
+          <CommonButton onPress={handleRegister}>
+            {isEditing ? '피보호자 정보 수정' : '피보호자 추가'}
+          </CommonButton>
         </View>
       </ScrollView>
     </Container>

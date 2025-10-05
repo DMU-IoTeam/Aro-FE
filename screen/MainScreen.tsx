@@ -1,7 +1,7 @@
 // ---------------------------------------------------
 // --- 메인 화면 ---------------------------------------
 // ---------------------------------------------------
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -9,61 +9,18 @@ import {
   Image,
   Text,
   ActivityIndicator,
-  FlatList,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Container from '../layouts/Container';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
-import CommonButton from '../components/common/CommonButton';
-import {getMySeniors, Senior} from '../api/senior';
+import {useSeniors} from '../hooks/useSeniors';
 
 const MainScreen = () => {
   const navigation = useNavigation();
-  const [seniors, setSeniors] = useState<Senior[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const {seniors, isLoading, error, calculateAge} = useSeniors();
 
-  function calculateAge(birthDateString) {
-    // 1. 입력받은 생년월일 문자열과 현재 날짜로 Date 객체를 생성합니다.
-    const birthDate = new Date(birthDateString);
-    const today = new Date();
-
-    // 2. 현재 연도와 생년의 차이로 기본 나이를 계산합니다.
-    let age = today.getFullYear() - birthDate.getFullYear();
-
-    // 3. 월과 일을 비교하여 생일이 지났는지 확인합니다.
-    const monthDifference = today.getMonth() - birthDate.getMonth();
-
-    // 생일이 아직 지나지 않은 경우 (월이 더 이르거나, 월은 같지만 일이 더 이른 경우)
-    if (
-      monthDifference < 0 ||
-      (monthDifference === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      // 나이에서 1을 뺍니다.
-      age--;
-    }
-
-    return age;
-  }
-
-  useEffect(() => {
-    const fetchMySeniors = async () => {
-      try {
-        setIsLoading(true);
-        const fetchedSeniors = await getMySeniors();
-        setSeniors(fetchedSeniors);
-      } catch (e: any) {
-        setError(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMySeniors();
-  }, []);
-
-  const navigateHandler = screen => {
+  const navigateHandler = (screen: string) => {
     navigation.navigate(screen);
   };
 
@@ -82,13 +39,13 @@ const MainScreen = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <Text>데이터를 불러오는 데 실패했습니다: {error.message}</Text>
-      </Container>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <Container>
+  //       <Text>데이터를 불러오는 데 실패했습니다: {error.message}</Text>
+  //     </Container>
+  //   );
+  // }
 
   return (
     <Container>
@@ -158,16 +115,6 @@ const MainScreen = () => {
           시리얼 넘버: q1w2e3r4t5
         </Text>
       </Pressable>
-      {/* <Pressable style={styles.robotStatusContainer}>
-        <Image
-          source={require('../assets/plus.png')} // 이미지는 일단 그대로 둡니다.
-        />
-        <Text style={styles.beforeProfileText}>Aro 등록하기</Text>
-      </Pressable> */}
-
-      {/* <CommonButton onPress={() => navigateHandler('CalendarScreen')}>
-          캘린더
-        </CommonButton> */}
     </Container>
   );
 };
@@ -229,11 +176,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 8,
     backgroundColor: COLOR.DEFAULT_COLOR,
-    // borderColor: COLOR.DEFAULT_COLOR,
-    // borderWidth: 1,
-    // flexDirection: 'row',
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // gap: 8,
   },
 });
