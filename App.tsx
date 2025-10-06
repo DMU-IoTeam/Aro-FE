@@ -10,6 +10,9 @@ import {View, ActivityIndicator} from 'react-native';
 import {useAuth} from './hooks/useAuth';
 import {useFCM} from './hooks/useFCM';
 
+// Constants
+import COLOR from './constants/color';
+
 // Screens
 import MainScreen from './screen/MainScreen';
 import FallDetectionScreen from './screen/FallDetectionScreen';
@@ -22,39 +25,78 @@ import ClientageProfileScreen from './screen/ClientageProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
-import CalendarScreen from './screen/CalendarScreen';
-import { getSeniors } from './api/senior';
 
 const Stack = createNativeStackNavigator();
 
 function RootStack({initialRouteName}: {initialRouteName: string}) {
   return (
-    <Stack.Navigator initialRouteName={initialRouteName}>
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
-      <Stack.Screen name="SignupScreen" component={SignupScreen} />
-      <Stack.Screen name="MainScreen" component={MainScreen} />
+    <Stack.Navigator
+      initialRouteName={initialRouteName}
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: 'white',
+        },
+        headerTintColor: '#1E293B',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+        headerTitleAlign: 'center',
+        headerBackTitleVisible: false, // iOS에서 뒤로가기 버튼 옆의 텍스트를 숨깁니다.
+      }}>
+      <Stack.Screen
+        name="LoginScreen"
+        component={LoginScreen}
+        options={{headerShown: false}} // 로그인 화면에서는 헤더를 숨깁니다.
+      />
+      <Stack.Screen
+        name="SignupScreen"
+        component={SignupScreen}
+        options={{title: '회원가입'}}
+      />
+      <Stack.Screen
+        name="MainScreen"
+        component={MainScreen}
+        options={{title: '케어 대시보드'}} // 메인 화면에서는 헤더를 투명하게 처리합니다.
+      />
       <Stack.Screen
         name="FallDetectionScreen"
         component={FallDetectionScreen}
+        options={{title: '위험 감지'}}
       />
-      <Stack.Screen name="MedicineTimeScreen" component={MedicineTimeScreen} />
+      <Stack.Screen
+        name="MedicineTimeScreen"
+        component={MedicineTimeScreen}
+        options={{title: '복약 설정'}}
+      />
       <Stack.Screen
         name="MedicineTimeSettingScreen"
         component={MedicineTimeSettingScreen}
+        options={{title: '복약 시간 설정'}}
       />
-      <Stack.Screen name="HealthCheckScreen" component={HealthCheckScreen} />
-      <Stack.Screen name="ScheduleScreen" component={ScheduleScreen} />
+      <Stack.Screen
+        name="HealthCheckScreen"
+        component={HealthCheckScreen}
+        options={{title: '건강 체크'}}
+      />
+      <Stack.Screen
+        name="ScheduleScreen"
+        component={ScheduleScreen}
+        options={{title: '외부 일정'}}
+      />
       <Stack.Screen
         name="ScheduleSettingScreen"
         component={ScheduleSettingScreen}
+        options={{title: '일정 설정'}}
       />
       <Stack.Screen
         name="RobotConditionScreen"
         component={RobotConditionScreen}
+        options={{title: '로봇 상태'}}
       />
       <Stack.Screen
         name="ClientageProfileScreen"
         component={ClientageProfileScreen}
+        options={{title: '피보호자 정보'}}
       />
     </Stack.Navigator>
   );

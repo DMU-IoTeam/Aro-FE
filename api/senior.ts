@@ -16,9 +16,7 @@ export interface Senior {
  */
 export const getSeniors = async (): Promise<Senior[]> => {
   try {
-    // TODO: 실제 API 엔드포인트로 수정하세요. (예: '/api/v1/seniors')
     const response = await apiClient.get('/api/users/seniors');
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Error fetching seniors:', error);
@@ -32,7 +30,6 @@ export const getSeniors = async (): Promise<Senior[]> => {
 export const getMySeniors = async (): Promise<Senior[]> => {
   try {
     const response = await apiClient.get<Senior[]>('/api/users/seniors');
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Error fetching my seniors:', error);
@@ -42,11 +39,9 @@ export const getMySeniors = async (): Promise<Senior[]> => {
 
 /**
  * 특정 ID의 노인 정보를 조회합니다.
- * @param seniorId - 조회할 노인의 ID
  */
 export const getSeniorById = async (seniorId: number): Promise<Senior> => {
   try {
-    // TODO: 실제 API 엔드포인트로 수정하세요.
     const response = await apiClient.get(`/seniors/${seniorId}`);
     return response.data;
   } catch (error) {
@@ -57,11 +52,9 @@ export const getSeniorById = async (seniorId: number): Promise<Senior> => {
 
 /**
  * 특정 ID의 노인 정보를 삭제합니다.
- * @param seniorId - 삭제할 노인의 ID
  */
 export const deleteSenior = async (seniorId: number): Promise<void> => {
   try {
-    // TODO: 실제 API 엔드포인트로 수정하세요.
     await apiClient.delete(`/seniors/${seniorId}`);
   } catch (error) {
     console.error(`Error deleting senior with id ${seniorId}:`, error);
@@ -71,35 +64,50 @@ export const deleteSenior = async (seniorId: number): Promise<void> => {
 
 export interface RegisterSeniorPayload {
   name: string;
+  email: string; // email 필드 추가
   birthDate: string;
   gender: string;
   address: string;
   medicalHistory: string;
   bloodType: string;
-  profileImage: string;
+  profileImage: string; // base64 문자열 또는 'default'
 }
 
 /**
  * 새로운 보호 대상자(노인)를 등록합니다.
  */
 export const registerSenior = async (
-  payload: FormData,
+  payload: RegisterSeniorPayload,
 ): Promise<Senior> => {
-  console.log(payload)
-  console.log(process.env.REACT_APP_API_BASE_URL)
   try {
     const response = await apiClient.post<Senior>(
       '/api/users/register-senior',
       payload,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      },
     );
     return response.data;
   } catch (error) {
     console.error('Error registering senior:', error);
+    throw error;
+  }
+};
+
+/**
+ * Updates a senior's information.
+ * @param seniorId - The ID of the senior to update.
+ * @param payload - The data to update.
+ */
+export const updateSenior = async (
+  seniorId: number,
+  payload: RegisterSeniorPayload,
+): Promise<Senior> => {
+  try {
+    const response = await apiClient.put<Senior>(
+      `/api/users/senior/${seniorId}`,
+      payload,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating senior with id ${seniorId}:`, error);
     throw error;
   }
 };

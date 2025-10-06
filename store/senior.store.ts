@@ -2,6 +2,7 @@ import {create} from 'zustand';
 import {
   getMySeniors,
   registerSenior as registerSeniorAPI,
+  updateSenior as updateSeniorAPI,
   Senior,
   RegisterSeniorPayload,
 } from '../api/senior';
@@ -22,6 +23,7 @@ const dummySeniors: Senior[] = [
 
 const initialFormData: Omit<RegisterSeniorPayload, 'profileImage'> = {
   name: '',
+  email: '',
   birthDate: '',
   gender: '',
   address: '',
@@ -29,20 +31,21 @@ const initialFormData: Omit<RegisterSeniorPayload, 'profileImage'> = {
   bloodType: '',
 };
 
-type FormField = keyof typeof initialFormData;
-type FormData = Omit<RegisterSeniorPayload, 'profileImage'>;
+type SeniorFormData = typeof initialFormData;
+type FormField = keyof SeniorFormData;
 
 interface SeniorState {
   seniors: Senior[];
   isLoading: boolean;
   error: Error | null;
-  formData: FormData;
+  formData: SeniorFormData;
   imageSource: Asset | null; // 새로 선택된 이미지 파일 정보
   displayImageUri: string | null; // 화면에 표시될 이미지 URI
   fetchSeniors: () => Promise<void>;
-  registerSenior: (payload: FormData) => Promise<void>;
+  registerSenior: (payload: RegisterSeniorPayload) => Promise<void>;
+  updateSenior: (id: number, payload: RegisterSeniorPayload) => Promise<void>;
   setFormData: (field: FormField, value: string) => void;
-  setFullFormData: (data: FormData) => void;
+  setFullFormData: (data: SeniorFormData) => void;
   setImageSource: (image: Asset | null) => void;
   setDisplayImageUri: (uri: string | null) => void;
   clearForm: () => void;
@@ -65,12 +68,21 @@ export const useSeniorStore = create<SeniorState>((set, get) => ({
       set({seniors: dummySeniors, isLoading: false, error: e});
     }
   },
-  registerSenior: async (payload: globalThis.FormData) => {
+  registerSenior: async (payload: RegisterSeniorPayload) => {
     try {
       await registerSeniorAPI(payload);
       await get().fetchSeniors(); // Re-fetch after registration
     } catch (error) {
       console.error('Error registering senior in store:', error);
+      throw error; // Re-throw to be caught in the component
+    }
+  },
+  updateSenior: async (id: number, payload: RegisterSeniorPayload) => {
+    try {
+      await updateSeniorAPI(id, payload);
+      await get().fetchSeniors(); // Re-fetch after update
+    } catch (error) {
+      console.error(`Error updating senior with id ${id} in store:`, error);
       throw error; // Re-throw to be caught in the component
     }
   },

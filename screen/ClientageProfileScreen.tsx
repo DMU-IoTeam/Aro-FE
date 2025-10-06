@@ -16,6 +16,7 @@ import {useSeniorStore} from '../store/senior.store';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
 import {launchImageLibrary} from 'react-native-image-picker';
+import {RegisterSeniorPayload} from '../api/senior';
 
 const ClientageProfileScreen = () => {
   const navigation = useNavigation();
@@ -30,13 +31,17 @@ const ClientageProfileScreen = () => {
     setDisplayImageUri,
     clearForm,
     registerSenior,
+    updateSenior, // 스토어에서 updateSenior 액션 가져오기
   } = useSeniorStore();
 
+  const isEditing = seniors.length > 0;
+
   useEffect(() => {
-    if (seniors.length > 0) {
+    if (isEditing) {
       const seniorToEdit = seniors[0];
       const formValues = {
         name: seniorToEdit.name,
+        email: 'admin@example.com', // TODO: 이메일 값 출처 확인 필요
         birthDate: seniorToEdit.birthDate,
         gender: seniorToEdit.gender || '',
         address: seniorToEdit.address || '',
@@ -50,14 +55,13 @@ const ClientageProfileScreen = () => {
       }
     }
 
-    // 컴포넌트가 언마운트될 때 폼 데이터를 초기화합니다.
     return () => {
       clearForm();
     };
-  }, [seniors, setFullFormData, setDisplayImageUri, clearForm]);
+  }, [isEditing, seniors, setFullFormData, setDisplayImageUri, clearForm]);
 
   const selectImageHandler = () => {
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    launchImageLibrary({mediaType: 'photo', includeBase64: true}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
@@ -74,7 +78,6 @@ const ClientageProfileScreen = () => {
       return;
     }
 
-    const payload = new FormData();
     const dataToSend = {...formData};
 
     if (dataToSend.gender === '남성') {
@@ -83,24 +86,24 @@ const ClientageProfileScreen = () => {
       dataToSend.gender = 'FEMALE';
     }
 
-    Object.keys(dataToSend).forEach(key => {
-      payload.append(key, dataToSend[key as keyof typeof dataToSend]);
-    });
-
-    if (imageSource && imageSource.uri) {
-      payload.append('profileImage', {
-        uri: imageSource.uri,
-        name: imageSource.fileName,
-        type: imageSource.type,
-      });
-    } else {
-      // 기존 이미지를 유지하거나, 기본 이미지로 설정하는 로직이 필요할 수 있습니다.
-      // 여기서는 새 이미지를 선택하지 않으면 'default'를 보냅니다.
-      payload.append('profileImage', 'default');
+    // TODO: email 값의 실제 출처를 확인하여 반영해야 합니다.
+    if (!dataToSend.email) {
+      dataToSend.email = 'admin@example.com';
     }
 
+    const payload: RegisterSeniorPayload = {
+      ...dataToSend,
+      profileImage: imageSource?.base64 || 'default',
+    };
+
     try {
-      await registerSenior(payload);
+      if (isEditing) {
+        const seniorId = seniors[0].id;
+        await updateSenior(seniorId, payload); // 수정 액션 호출
+      } else {
+        await registerSenior(payload); // 등록 액션 호출
+      }
+
       Alert.alert('성공', '피보호자 정보가 저장되었습니다.', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
@@ -109,8 +112,6 @@ const ClientageProfileScreen = () => {
       Alert.alert('오류', '저장 중 문제가 발생했습니다.');
     }
   };
-
-  const isEditing = seniors.length > 0;
 
   return (
     <Container>

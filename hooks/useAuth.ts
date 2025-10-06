@@ -7,27 +7,28 @@ export const useAuth = () => {
   const [initialRoute, setInitialRoute] = useState('LoginScreen');
 
   useEffect(() => {
-    setInitialRoute('MainScreen');
-    setIsLoading(false);
-    // const checkAuthStatus = async () => {
-    //   try {
-    //     const token = await AsyncStorage.getItem('accessToken');
-    //     if (token) {
-    //       await getMe();
-    //       setInitialRoute('MainScreen');
-    //     } else {
-    //       setInitialRoute('LoginScreen');
-    //     }
-    //   } catch (error) {
-    //     console.error('토큰 검증 실패:', error);
-    //     await AsyncStorage.removeItem('accessToken');
-    //     setInitialRoute('LoginScreen');
-    //   } finally {
-    //     setIsLoading(false);
-    //   }
-    // };
+    // setInitialRoute('MainScreen');
+    // setIsLoading(false);
 
-    // checkAuthStatus();
+    const checkAuthStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (token) {
+          await getMe();
+          setInitialRoute('MainScreen');
+        } else {
+          setInitialRoute('LoginScreen');
+        }
+      } catch (error) {
+        console.error('토큰 검증 실패:', error);
+        await AsyncStorage.removeItem('accessToken');
+        setInitialRoute('LoginScreen');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
   return {isLoading, initialRoute};
