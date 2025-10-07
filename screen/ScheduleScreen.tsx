@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  Alert, // Alert 임포트
 } from 'react-native';
 import {Calendar, LocaleConfig} from 'react-native-calendars';
 import type {DateData} from 'react-native-calendars/src/types';
@@ -15,6 +16,7 @@ import {useSeniorStore} from '../store/senior.store';
 import {useActivityScheduleStore} from '../store/activitySchedule.store';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
+import {deleteActivitySchedule} from '../api/activity'; // API 함수 임포트
 
 // react-native-calendars 한글 설정 (이미 다른 곳에 있다면 중복)
 LocaleConfig.locales['ko'] = {
@@ -52,6 +54,29 @@ const ScheduleScreen = () => {
 
   const onDayPress = (day: DateData) => {
     setSelectedDate(day.dateString);
+  };
+
+  const handleDelete = async (scheduleId: number) => {
+    if (seniors.length === 0) return;
+    const seniorId = seniors[0].id;
+
+    Alert.alert('일정 삭제', '정말로 이 일정을 삭제하시겠습니까?', [
+      {text: '취소', style: 'cancel'},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteActivitySchedule(scheduleId);
+            Alert.alert('성공', '일정이 삭제되었습니다.');
+            await fetchSchedules(seniorId); // 목록 새로고침
+          } catch (err) {
+            console.error('Error deleting schedule:', err);
+            Alert.alert('오류', '일정 삭제 중 오류가 발생했습니다.');
+          }
+        },
+      },
+    ]);
   };
 
   const schedulesForSelectedDate = schedulesByDate[selectedDate] || [];
@@ -103,11 +128,18 @@ const ScheduleScreen = () => {
               {schedulesForSelectedDate.length > 0 ? (
                 schedulesForSelectedDate.map(schedule => (
                   <View key={schedule.id} style={styles.scheduleItem}>
-                    <Text style={styles.scheduleTime}>{schedule.time}</Text>
-                    <Text style={styles.scheduleTitle}>{schedule.title}</Text>
-                    {schedule.memo && (
-                      <Text style={styles.scheduleMemo}>{schedule.memo}</Text>
-                    )}
+                    <View style={{flex: 1}}>
+                      <Text style={styles.scheduleTime}>{schedule.time}</Text>
+                      <Text style={styles.scheduleTitle}>{schedule.title}</Text>
+                      {schedule.memo && (
+                        <Text style={styles.scheduleMemo}>{schedule.memo}</Text>
+                      )}
+                    </View>
+                    <Pressable
+                      onPress={() => handleDelete(schedule.id)}
+                      style={styles.deleteButton}>
+                      <Text style={styles.deleteButtonText}>삭제</Text>
+                    </Pressable>
                   </View>
                 ))
               ) : (
@@ -156,6 +188,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderColor: '#eee',
     borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   scheduleTime: {
     fontSize: 14,
@@ -175,6 +210,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     color: 'gray',
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444', // red-500
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: layout.BORDER_RADIUS,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 

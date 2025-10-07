@@ -77,10 +77,6 @@ export const addActivitySchedule = async (
   }
 };
 
-/**
- * Fetches activity schedules for a senior.
- * @param seniorId - The ID of the senior.
- */
 export const getActivitySchedules = async (
   seniorId: number,
 ): Promise<ActivityScheduleResponse[]> => {
@@ -94,6 +90,19 @@ export const getActivitySchedules = async (
       `Error fetching activity schedules for senior ${seniorId}:`,
       error,
     );
+    throw error;
+  }
+};
+
+/**
+ * Deletes an activity schedule.
+ * @param scheduleId - The ID of the schedule to delete.
+ */
+export const deleteActivitySchedule = async (scheduleId: number): Promise<void> => {
+  try {
+    await apiClient.delete(`/api/schedules/${scheduleId}`);
+  } catch (error) {
+    console.error(`Error deleting activity schedule ${scheduleId}:`, error);
     throw error;
   }
 };
