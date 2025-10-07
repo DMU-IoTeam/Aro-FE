@@ -1,235 +1,174 @@
-import {Pressable, Text, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
+import {Calendar, LocaleConfig} from 'react-native-calendars';
+import type {DateData} from 'react-native-calendars/src/types';
 import Container from '../layouts/Container';
-import {useState} from 'react';
+import {useSeniorStore} from '../store/senior.store';
+import {useCalendarStore} from '../store/calendar.store';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
-import {faChevronLeft, faChevronRight} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {medicineData} from '../assets/data/medicineData';
+
+// react-native-calendars 한글 설정
+LocaleConfig.locales['ko'] = {
+  monthNames: [
+    '1월',
+    '2월',
+    '3월',
+    '4월',
+    '5월',
+    '6월',
+    '7월',
+    '8월',
+    '9월',
+    '10월',
+    '11월',
+    '12월',
+  ],
+  monthNamesShort: [
+    '1월',
+    '2월',
+    '3월',
+    '4월',
+    '5월',
+    '6월',
+    '7월',
+    '8월',
+    '9월',
+    '10월',
+    '11월',
+    '12월',
+  ],
+  dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
+  dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
+  today: "오늘",
+};
+LocaleConfig.defaultLocale = 'ko';
 
 const CalendarScreen = () => {
-  const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const {seniors} = useSeniorStore();
+  const {markedDates, logsByDate, isLoading, error, fetchCalendarData} =
+    useCalendarStore();
 
-  const [year, setYear] = useState(currentDate.getFullYear());
-  const [month, setMonth] = useState(currentDate.getMonth());
+  const [selectedDate, setSelectedDate] = useState('');
 
-  // 현재 달의 첫 날
-  const firstDayOfMonth = new Date(year, month, 1);
-  // 달력 시작 날짜를 현재 달의 첫 날의 주의 일요일로 설정
-  const startDay = new Date(firstDayOfMonth);
-  startDay.setDate(1 - firstDayOfMonth.getDay());
-
-  // 현재 달의 마지막 날
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  // 달력 끝 날짜를 현재 달의 마지막 날의 주의 토요일로 설정
-  const endDay = new Date(lastDayOfMonth);
-  endDay.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
-
-  /** startDay부터 endDay까지의 날짜를 주 단위로 그룹화하는 함수 */
-  const groupDatesByWeek = (startDay, endDay) => {
-    const weeks = []; // 최종적으로 주 단위로 그룹화된 날짜 배열들을 저장할 배열
-    let currentWeek = []; // 현재 처리 중인 주를 나타내는 배열
-    let currentDate = new Date(startDay); // 반복 처리를 위한 현재 날짜 변수, 시작 날짜로 초기화
-
-    // 시작 날짜부터 끝 날짜까지 반복
-    while (currentDate <= endDay) {
-      // 배열로 push 한 건 현재 달과 전 달 다음 달 구분을 위해 넣음
-      //   1번 인덱스에 0을 넣어 전 달 구분
-      currentWeek.push([new Date(currentDate), 0]); // 현재 날짜를 현재 주에 추가
-      // 현재 주가 7일을 모두 채웠거나 현재 날짜가 토요일인 경우
-      if (currentWeek.length === 7 || currentDate.getDay() === 6) {
-        weeks.push(currentWeek); // 완성된 주를 weeks 배열에 추가
-        currentWeek = []; // 새로운 주를 시작하기 위해 currentWeek을 재초기화
-      }
-      currentDate.setDate(currentDate.getDate() + 1); // 현재 날짜를 다음 날로 변경
+  useEffect(() => {
+    if (seniors.length > 0) {
+      const seniorId = seniors[0].id;
+      fetchCalendarData(seniorId);
     }
+  }, [seniors, fetchCalendarData]);
 
-    // 첫 주 처리(전 달 보이게)
-    // console.log(weeks[0])
-    if (weeks[0].length < 7) {
-      let tempDate = 0;
-      while (weeks[0].length !== 7) {
-        // 배열로 push 한 건 현재 달과 전 달 다음 달 구분을 위해 넣음
-        weeks[0] = [[new Date(year, month, tempDate), 1], ...weeks[0]];
-        tempDate--;
-      }
-    }
-
-    // 마지막 주 처리 (만약 남아있다면)
-    if (currentWeek.length > 0) {
-      // 다음 달 날짜까지
-      let tempDate = 1;
-      while (currentWeek.length !== 7) {
-        // 배열로 push 한 건 현재 달과 전 달 다음 달 구분을 위해 넣음
-        if (month > 11) {
-          currentWeek.push([new Date(year + 1, 0, tempDate), 1]);
-        } else {
-          currentWeek.push([new Date(year, month + 1, tempDate), 1]);
-        }
-        tempDate++;
-      }
-      weeks.push(currentWeek); // 남아 있는 날짜가 있다면 마지막 주로 weeks에 추가
-    }
-
-    return weeks; // 주 단위로 그룹화된 날짜 배열들을 반환
+  const onDayPress = (day: DateData) => {
+    setSelectedDate(day.dateString);
   };
 
-  // 이전 달로 이동
-  const handlePrevMonth = () => {
-    const newDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() - 1,
-      1,
-    );
-    setCurrentDate(newDate);
-    setYear(newDate.getFullYear());
-    setMonth(newDate.getMonth());
-  };
+  const logsForSelectedDate = logsByDate[selectedDate] || [];
 
-  // 다음 달로 이동
-  const handleNextMonth = () => {
-    const newDate = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth() + 1,
-      1,
-    );
-    setCurrentDate(newDate);
-    setYear(newDate.getFullYear());
-    setMonth(newDate.getMonth());
-  };
-
-  // 년월일 추출 함수
-  const isSameDay = (date1: Date, date2: Date) => {
+  if (seniors.length === 0) {
     return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
+      <Container style={styles.centerContainer}>
+        <Text>피보호자를 먼저 등록해주세요.</Text>
+      </Container>
     );
-  };
-
-  const getYearMonthDate = date => {
-    const year = date.getYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    return `${year}-${String(month).padStart(2, '0')}-${day}`;
-  };
+  }
 
   return (
     <Container>
-      {/* 년월~ */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          marginBottom: 12,
-        }}>
-        <Pressable
-          onPress={() => {
-            handlePrevMonth();
-          }}>
-          <FontAwesomeIcon icon={faChevronLeft} size={24} />
-        </Pressable>
+      <ScrollView>
+        <Calendar
+          markedDates={{
+            ...markedDates,
+            [selectedDate]: {
+              ...markedDates[selectedDate],
+              selected: true,
+              selectedColor: COLOR.DEFAULT_COLOR,
+            },
+          }}
+          onDayPress={onDayPress}
+          monthFormat={'yyyy년 MM월'}
+          theme={{
+            arrowColor: COLOR.DEFAULT_COLOR,
+            todayTextColor: COLOR.DEFAULT_COLOR,
+          }}
+        />
 
-        <Text style={{fontSize: 28}}>{`${year}.${String(month + 1).padStart(
-          2,
-          '0',
-        )}`}</Text>
-
-        <Pressable
-          onPress={() => {
-            handleNextMonth();
-          }}>
-          <FontAwesomeIcon icon={faChevronRight} size={24} />
-        </Pressable>
-      </View>
-      {/* 요일~ */}
-      <View style={{flexDirection: 'row', marginBottom: 8}}>
-        {days.map((item, index) => {
-          return (
-            <View
-              key={index}
-              style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-              <Text style={{fontSize: 24}}>{item}</Text>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* 일~ */}
-      {groupDatesByWeek(firstDayOfMonth, lastDayOfMonth).map((weeks, index) => {
-        return (
-          <View
-            key={index}
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              marginBottom: 12,
-            }}>
-            {weeks.map((week, index) => {
-              return (
-                <Pressable
-                  key={index}
-                  style={{
-                    borderRadius: layout.BORDER_RADIUS,
-                    // backgroundColor: '#eee',
-                    backgroundColor: isSameDay(week[0], currentDate)
-                      ? COLOR.DEFAULT_COLOR
-                      : '#eee',
-                    paddingVertical: 2,
-                    paddingHorizontal: 6,
-                    opacity: week[1] == 1 ? 0.2 : 1,
-                  }}
-                  onPress={() => {
-                    const selectedDate = week[0];
-                    const selectedMonth = selectedDate.getMonth();
-                    const selectedYear = selectedDate.getFullYear();
-
-                    setCurrentDate(selectedDate);
-
-                    // 전 달 날짜 선택 시
-                    if (
-                      selectedYear < year ||
-                      (selectedYear === year && selectedMonth < month)
-                    ) {
-                      setYear(selectedYear);
-                      setMonth(selectedMonth);
-                    }
-
-                    // 다음 달 날짜 선택 시
-                    if (
-                      selectedYear > year ||
-                      (selectedYear === year && selectedMonth > month)
-                    ) {
-                      setYear(selectedYear);
-                      setMonth(selectedMonth);
-                    }
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 24,
-                      color: isSameDay(week[0], currentDate)
-                        ? 'white'
-                        : 'black',
-                    }}>
-                    {String(week[0].getDate()).padStart(2, '0')}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        );
-      })}
-      {/* 
-      {medicineData?.getYearMonthDate(currentDate) && (
-        <View>
-          <Text>hi</Text>
+        <View style={styles.logContainer}>
+          {isLoading && <ActivityIndicator color={COLOR.DEFAULT_COLOR} />}
+          {error && <Text>기록을 불러오는 데 실패했습니다.</Text>}
+          {!isLoading && !error && (
+            <>
+              {logsForSelectedDate.length > 0 ? (
+                logsForSelectedDate.map(log => (
+                  <View key={log.logId} style={styles.logItem}>
+                    <Text style={styles.logTime}>{log.scheduleTime}</Text>
+                    {log.medicines.map(med => (
+                      <View key={med.id} style={styles.medicineItem}>
+                        <Text style={styles.medicineName}>{med.name}</Text>
+                        {med.memo && (
+                          <Text style={styles.medicineMemo}>{med.memo}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noLogText}>
+                  {selectedDate ? '선택한 날짜에 복약 기록이 없습니다.' : '날짜를 선택하여 복약 기록을 확인하세요.'}
+                </Text>
+              )}
+            </>
+          )}
         </View>
-      )} */}
+      </ScrollView>
     </Container>
   );
 };
+
+const styles = StyleSheet.create({
+  centerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logContainer: {
+    marginTop: 20,
+    paddingHorizontal: layout.HORIZONTAL_PADDING,
+  },
+  logItem: {
+    backgroundColor: 'white',
+    borderRadius: layout.BORDER_RADIUS,
+    padding: 15,
+    marginBottom: 10,
+    borderColor: '#eee',
+    borderWidth: 1,
+  },
+  logTime: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: COLOR.DEFAULT_COLOR,
+  },
+  medicineItem: {
+    marginLeft: 10,
+    marginBottom: 5,
+  },
+  medicineName: {
+    fontSize: 16,
+  },
+  medicineMemo: {
+    fontSize: 14,
+    color: 'gray',
+  },
+  noLogText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: 'gray',
+  },
+});
 
 export default CalendarScreen;

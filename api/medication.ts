@@ -151,3 +151,31 @@ export const deleteMedicationSchedule = async (scheduleId: number): Promise<void
     throw error;
   }
 };
+
+// --- 캘린더를 위한 복약 기록 API ---
+export interface MedicationLogResponse {
+  logId: number;
+  scheduleId: number;
+  userId: number;
+  confirmedAt: string;
+  notified: boolean;
+  createdAt: string;
+}
+
+/**
+ * Fetches the medication log for a senior.
+ * @param seniorId - The ID of the senior.
+ */
+export const getMedicationLog = async (
+  seniorId: number,
+): Promise<MedicationLogResponse[]> => {
+  try {
+    const response = await apiClient.get<MedicationLogResponse[]>(
+      `/api/medication/log/${seniorId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching medication log for senior ${seniorId}:`, error);
+    throw error;
+  }
+};

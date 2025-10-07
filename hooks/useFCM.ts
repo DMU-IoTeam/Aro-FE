@@ -21,7 +21,7 @@ export const useFCM = (navigationRef: NavigationContainerRef<any> | null) => {
         const token = await getToken(messaging);
         console.log('✅ FCM Token:', token);
         if (token) {
-          // await registerFcmToken(token);
+          await registerFcmToken(token);
           console.log('FCM 토큰을 서버에 성공적으로 등록했습니다.');
         }
       } catch (error) {

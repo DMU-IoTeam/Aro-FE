@@ -93,6 +93,7 @@ const MedicineTimeScreen = () => {
             </View>
           </View>
         ))}
+        <Pressable onPress={()=>{navigation.navigate('CalendarScreen')}}><Text>캘린더</Text></Pressable>
       </View>
 
       {/* 복약 일정 추가 버튼 */}

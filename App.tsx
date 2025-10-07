@@ -25,6 +25,7 @@ import ClientageProfileScreen from './screen/ClientageProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
+import CalendarScreen from './screen/CalendarScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -97,6 +98,11 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
         name="ClientageProfileScreen"
         component={ClientageProfileScreen}
         options={{title: '피보호자 정보'}}
+      />
+      <Stack.Screen
+        name="CalendarScreen"
+        component={CalendarScreen}
+        options={{title: '캘린더'}}
       />
     </Stack.Navigator>
   );
