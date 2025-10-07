@@ -48,7 +48,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
 
       // 2. 복약 기록 API 호출
       const logs = await getMedicationLog(seniorId);
-      console.log('Fetched logs:', logs);
+      // console.log('Fetched logs:', logs);
       // 3. 데이터 가공 및 매핑
       const newLogsByDate: {[date: string]: MappedLog[]} = {};
       const newMarkedDates: MarkedDates = {};

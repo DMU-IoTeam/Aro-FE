@@ -1,138 +1,245 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, TextInput, Pressable} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+} from 'react-native';
 import WheelPicker from 'react-native-wheely';
+import {useNavigation} from '@react-navigation/native';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
 import layout from '../constants/layout';
 import Container from '../layouts/Container';
+import {useSeniorStore} from '../store/senior.store';
+import {useActivityScheduleStore} from '../store/activitySchedule.store';
 
+// --- WheelPicker 설정 ---
 const LOOP_COUNT = 50;
 const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
 const baseMinutes = Array.from({length: 60}, (_, i) =>
   i < 10 ? `0${i}` : `${i}`,
 );
 const baseAmPm = ['오전', '오후'];
-
-// 무한 스크롤을 위해 데이터 반복
 const repeatedHours = Array(LOOP_COUNT).fill(baseHours).flat();
 const repeatedMinutes = Array(LOOP_COUNT).fill(baseMinutes).flat();
-
-// 중앙 인덱스 설정
 const centerHour = Math.floor(repeatedHours.length / 2);
 const centerMinute = Math.floor(repeatedMinutes.length / 2);
+// ----------------------
+
+// 날짜를 YYYY-MM-DD 형식으로 포맷하는 함수
+const formatDate = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const ScheduleSettingScreen = () => {
+  const navigation = useNavigation();
+  const {seniors} = useSeniorStore();
+  const {addSchedule} = useActivityScheduleStore();
+
+  // Form State
+  const [title, setTitle] = useState('');
+  const [memo, setMemo] = useState('');
+  const [date, setDate] = useState(new Date()); // Date 객체로 관리
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Time Picker State
   const [hourIndex, setHourIndex] = useState(0);
   const [minuteIndex, setMinuteIndex] = useState(0);
   const [ampmIndex, setAmPmIndex] = useState(0);
 
-  const [medicineName, setMedicineName] = useState('');
-  const [medicineArray, setMedicineArray] = useState([]);
-
-  // 끝에 다다르면 중앙으로 다시 보내는 무한 스크롤 트릭
+  // --- WheelPicker 핸들러 ---
   const handleHourChange = (index: number) => {
     setHourIndex(index);
     if (index < 12 || index > repeatedHours.length - 12) {
       setTimeout(() => setHourIndex(centerHour), 10);
     }
   };
-
   const handleMinuteChange = (index: number) => {
     setMinuteIndex(index);
     if (index < 60 || index > repeatedMinutes.length - 60) {
       setTimeout(() => setMinuteIndex(centerMinute), 10);
     }
   };
-
-  // 렌더 후 center로 이동 (딱 한 번만)
   useEffect(() => {
     setTimeout(() => {
       setHourIndex(centerHour);
       setMinuteIndex(centerMinute);
-    }, 10); // 다음 tick에 실행 (렌더 후)
+    }, 10);
   }, []);
+  // ------------------------
 
-  const medicineAddHandler = () => {
-    if (medicineName.length === 0) return;
-    setMedicineArray([...medicineArray, medicineName]);
-    setMedicineName('');
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === 'ios'); // iOS는 수동으로 닫아야 함
+    setDate(currentDate);
   };
 
+  const handleSave = async () => {
+    if (seniors.length === 0) {
+      Alert.alert('오류', '등록된 피보호자가 없습니다.');
+      return;
+    }
+    if (!title) {
+      Alert.alert('오류', '일정 제목은 필수 항목입니다.');
+      return;
+    }
+
+    const seniorId = seniors[0].id;
+
+    // 시간 계산
+    const isAm = baseAmPm[ampmIndex] === '오전';
+    let hour = parseInt(repeatedHours[hourIndex], 10);
+    if (isAm && hour === 12) hour = 0;
+    if (!isAm && hour !== 12) hour += 12;
+    const minute = parseInt(repeatedMinutes[minuteIndex], 10);
+
+    // ISO 8601 형식으로 변환
+    const startTime = new Date(date);
+    startTime.setHours(hour);
+    startTime.setMinutes(minute);
+
+    console.log('startTime:', startTime.toISOString());
+    
+    const payload = {
+      seniorId,
+      title,
+      memo,
+      startTime: startTime.toISOString(),
+    };
+
+    try {
+      await addSchedule(payload);
+      Alert.alert('성공', '일정이 성공적으로 등록되었습니다.', [
+        {text: '확인', onPress: () => navigation.goBack()},
+      ]);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('오류', '일정 등록 중 오류가 발생했습니다.');
+    }
+  };
+
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   return (
-    <Container style={{position: 'relative'}}>
-      {/* 시간 선택 */}
-      <View style={styles.pickerRow}>
-        <WheelPicker
-          options={baseAmPm}
-          selectedIndex={ampmIndex}
-          onChange={setAmPmIndex}
-          itemHeight={60}
-          itemStyle={{}}
-          itemTextStyle={styles.itemTextStyle}
-          selectedIndicatorStyle={styles.selectedIndicatorStyle}
-          visibleRest={1}
-          containerStyle={styles.containerStyle}
-        />
-        <WheelPicker
-          options={repeatedHours}
-          selectedIndex={hourIndex}
-          onChange={handleHourChange}
-          itemHeight={60}
-          itemStyle={{}}
-          itemTextStyle={styles.itemTextStyle}
-          selectedIndicatorStyle={styles.selectedIndicatorStyle}
-          visibleRest={1}
-          containerStyle={styles.containerStyle}
-        />
-        <WheelPicker
-          options={repeatedMinutes}
-          selectedIndex={minuteIndex}
-          onChange={handleMinuteChange}
-          itemHeight={60}
-          itemStyle={{}}
-          itemTextStyle={styles.itemTextStyle}
-          selectedIndicatorStyle={styles.selectedIndicatorStyle}
-          visibleRest={1}
-          containerStyle={styles.containerStyle}
-        />
-      </View>
+    <Container>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{flex: 1}}>
+        <ScrollView scrollEnabled={scrollEnabled}>
+          <Text style={styles.label}>날짜</Text>
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <View style={styles.dateInput}>
+              <Text style={styles.dateText}>{formatDate(date)}</Text>
+            </View>
+          </Pressable>
 
-      {/* 약 추가 인풋 */}
-      <View style={{gap: 12, marginTop: 40}}>
-        <Input
-          value={medicineName}
-          onChangeText={e => {
-            setMedicineName(e.taget.value);
-          }}
-          placeholder="일정 입력"
-        />
-        <CommonButton onPress={medicineAddHandler}>확인</CommonButton>
-      </View>
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={date}
+              mode={'date'}
+              is24Hour={true}
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
 
-      {/* <View
-        style={{
-          position: 'absolute',
-          bottom: 50,
-          width: '100%',
-          left: layout.HORIZONTAL_VALUE,
-        }}>
-        <CommonButton onPress={() => {}}>확인</CommonButton>
-      </View> */}
+          <Text style={styles.label}>시간</Text>
+          <View
+            style={styles.pickerRow}
+            onStartShouldSetResponder={() => true}
+            onResponderGrant={() => setScrollEnabled(false)} // WheelPicker 터치 시작 → ScrollView 비활성화
+            onResponderRelease={() => setScrollEnabled(true)} // 손 뗄 때 다시 활성화
+          >
+            <WheelPicker
+              options={baseAmPm}
+              selectedIndex={ampmIndex}
+              onChange={setAmPmIndex}
+              itemHeight={60}
+              itemTextStyle={styles.itemTextStyle}
+              selectedIndicatorStyle={styles.selectedIndicatorStyle}
+              containerStyle={styles.containerStyle}
+            />
+            <WheelPicker
+              options={repeatedHours}
+              selectedIndex={hourIndex}
+              onChange={handleHourChange}
+              itemHeight={60}
+              itemTextStyle={styles.itemTextStyle}
+              selectedIndicatorStyle={styles.selectedIndicatorStyle}
+              containerStyle={styles.containerStyle}
+            />
+            <WheelPicker
+              options={repeatedMinutes}
+              selectedIndex={minuteIndex}
+              onChange={handleMinuteChange}
+              itemHeight={60}
+              itemTextStyle={styles.itemTextStyle}
+              selectedIndicatorStyle={styles.selectedIndicatorStyle}
+              containerStyle={styles.containerStyle}
+            />
+          </View>
+
+          <Text style={styles.label}>일정 제목</Text>
+          <Input
+            value={title}
+            onChangeText={setTitle}
+            placeholder="일정 제목을 입력하세요"
+          />
+
+          <Text style={styles.label}>메모</Text>
+          <Input
+            value={memo}
+            onChangeText={setMemo}
+            placeholder="(선택) 메모를 입력하세요"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            style={{height: 100}}
+          />
+        </ScrollView>
+        <View style={styles.buttonContainer}>
+          <CommonButton onPress={handleSave}>일정 저장</CommonButton>
+        </View>
+      </KeyboardAvoidingView>
     </Container>
   );
 };
 
 const styles = StyleSheet.create({
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: layout.BORDER_RADIUS,
+    padding: 12,
+    backgroundColor: 'white',
+  },
+  dateText: {
+    fontSize: 16,
+  },
   pickerRow: {
     flexDirection: 'row',
     gap: 20,
     justifyContent: 'center',
+    height: 250,
   },
-  selectedText: {
-    marginTop: 40,
-    fontSize: 20,
-  },
-  itemStyle: {},
   itemTextStyle: {
     fontSize: 32,
   },
@@ -145,6 +252,9 @@ const styles = StyleSheet.create({
     borderTopColor: 'gray',
     borderBottomColor: 'gray',
     backgroundColor: 'white',
+  },
+  buttonContainer: {
+    paddingVertical: 20,
   },
 });
 

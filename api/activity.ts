@@ -44,3 +44,56 @@ export const getCareEvents = async (seniorId: number): Promise<CareEvent[]> => {
     throw error;
   }
 };
+
+// --- Activity Schedule ---
+
+export interface AddActivitySchedulePayload {
+  seniorId: number;
+  title: string;
+  memo: string;
+  startTime: string; // ISO 8601 format
+}
+
+export interface ActivityScheduleResponse {
+  id: number;
+  seniorId: number;
+  title: string;
+  memo: string;
+  startTime: string;
+}
+
+/**
+ * Adds a new activity schedule.
+ * @param payload - The schedule data.
+ */
+export const addActivitySchedule = async (
+  payload: AddActivitySchedulePayload,
+): Promise<void> => {
+  try {
+    await apiClient.post('/api/schedules', payload);
+  } catch (error) {
+    console.error('Error adding activity schedule:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches activity schedules for a senior.
+ * @param seniorId - The ID of the senior.
+ */
+export const getActivitySchedules = async (
+  seniorId: number,
+): Promise<ActivityScheduleResponse[]> => {
+  try {
+    const response = await apiClient.get<ActivityScheduleResponse[]>(
+      `/api/schedules/senior/${seniorId}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching activity schedules for senior ${seniorId}:`,
+      error,
+    );
+    throw error;
+  }
+};
