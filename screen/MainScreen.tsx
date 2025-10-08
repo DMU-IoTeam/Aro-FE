@@ -28,7 +28,7 @@ const MainScreen = () => {
     {color: '#309898', text: '복약 설정', screenName: 'MedicineTimeScreen'},
     {color: '#F4631E', text: '외부 일정', screenName: 'ScheduleScreen'},
     {color: '#FF9F00', text: '건강 체크', screenName: 'HealthCheckScreen'},
-    {color: '#CB0404', text: '위험 감지', screenName: 'FallDetectionScreen'},
+    {color: '#8A2BE2', text: '사진 업로드', screenName: 'PhotoUploadScreen'},
   ];
 
   if (isLoading) {
@@ -103,7 +103,6 @@ const MainScreen = () => {
           </Pressable>
         ))}
       </View>
-
       {/* 로봇 상태 */}
       <Pressable
         style={styles.robotStatusContainer}

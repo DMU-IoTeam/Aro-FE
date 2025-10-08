@@ -26,6 +26,7 @@ import LoginScreen from './screen/LoginScreen';
 import SignupScreen from './screen/SignupScreen';
 import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
 import CalendarScreen from './screen/CalendarScreen';
+import PhotoUploadScreen from './screen/PhotoUploadScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -104,6 +105,8 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
         component={CalendarScreen}
         options={{title: '캘린더'}}
       />
+      <Stack.Screen name="PhotoUploadScreen" component={PhotoUploadScreen} />
+
     </Stack.Navigator>
   );
 }
