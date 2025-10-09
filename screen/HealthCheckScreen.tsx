@@ -1,42 +1,88 @@
-import {StyleSheet, Text, View} from 'react-native';
+import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  FlatList,
+  Alert,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
-import PickedBox from '../components/common/PickedBox';
-import NotPickedBox from '../components/common/NotPickedBox';
+import CommonButton from '../components/common/CommonButton';
+import {useHealthCheckStore} from '../store/healthCheck.store';
+import COLOR from '../constants/color';
 import layout from '../constants/layout';
 
+// Define navigation param types for type safety
+type RootStackParamList = {
+  HealthCheckQuestion: {questionId?: string};
+  // ... other screens
+};
+
+type HealthCheckScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'HealthCheckQuestion'
+>;
+
 const HealthCheckScreen = () => {
-  const healthData = [
-    {title: '오늘의 건강', isGood: true},
-    {title: '오늘의 기분', isGood: false},
-  ];
+  const navigation = useNavigation<HealthCheckScreenNavigationProp>();
+  const {questions, deleteQuestion} = useHealthCheckStore();
+
+  const handleDelete = (id: string) => {
+    Alert.alert('질문 삭제', '정말로 이 질문을 삭제하시겠습니까?', [
+      {text: '취소', style: 'cancel'},
+      {text: '삭제', style: 'destructive', onPress: () => deleteQuestion(id)},
+    ]);
+  };
 
   return (
     <Container>
-      <View style={{marginBottom: 12}}>
-        <Text style={{textAlign: 'center', fontSize: 28}}>
-          홍길동님의 건강 상태
-        </Text>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>건강 체크 질문 관리</Text>
       </View>
 
-      {healthData.map((item, index) => {
-        return (
-          <View key={index}>
-            <Text style={{fontSize: layout.FONT_SIZE}}>{item.title}</Text>
-            {/* 버튼 */}
-            {item.isGood ? (
-              <View style={styles.boxWrapper}>
-                <PickedBox>좋음</PickedBox>
-                <NotPickedBox>좋지 않음</NotPickedBox>
+      <View style={styles.addQuestionButtonContainer}>
+        <CommonButton onPress={() => navigation.navigate('HealthCheckQuestion')}>
+          + 새로운 질문 추가
+        </CommonButton>
+      </View>
+
+      <FlatList
+        data={questions}
+        keyExtractor={item => item.id}
+        renderItem={({item}) => (
+          <Pressable
+            style={styles.questionItem}
+            onPress={() =>
+              navigation.navigate('HealthCheckQuestion', {questionId: item.id})
+            }>
+            <View style={styles.questionContent}>
+              <Text style={styles.questionItemText} numberOfLines={1}>
+                {item.text}
+              </Text>
+              <View style={styles.optionsPreviewContainer}>
+                {item.options.map(option => (
+                  <View key={option} style={styles.optionPreviewChip}>
+                    <Text style={styles.optionPreviewText}>{option}</Text>
+                  </View>
+                ))}
               </View>
-            ) : (
-              <View style={styles.boxWrapper}>
-                <NotPickedBox>좋음</NotPickedBox>
-                <PickedBox>좋지 않음</PickedBox>
-              </View>
-            )}
+            </View>
+            <Pressable
+              style={styles.deleteButton}
+              onPress={() => handleDelete(item.id)}>
+              <Text style={styles.deleteButtonText}>삭제</Text>
+            </Pressable>
+          </Pressable>
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
           </View>
-        );
-      })}
+        }
+      />
     </Container>
   );
 };
@@ -44,10 +90,68 @@ const HealthCheckScreen = () => {
 export default HealthCheckScreen;
 
 const styles = StyleSheet.create({
-  boxWrapper:{
+  header: {
+    marginBottom: 15,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  addQuestionButtonContainer: {
+    marginBottom: 20,
+  },
+  questionItem: {
     flexDirection: 'row',
-    gap: 24,
-    marginTop: 10,
-    marginBottom: 14
-  }
-})
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: layout.BORDER_RADIUS,
+  },
+  questionContent: {
+    flex: 1,
+  },
+  questionItemText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  optionsPreviewContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  optionPreviewChip: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  optionPreviewText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  deleteButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#ff3b30',
+    borderRadius: 5,
+    marginLeft: 15,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: 'grey',
+  },
+});
