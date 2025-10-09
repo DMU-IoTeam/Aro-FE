@@ -15,7 +15,7 @@ const getAccessToken = async (): Promise<string | null> => {
 
 // 플랫폼에 따라 다른 localhost 주소를 사용
 const baseURL = 'http://10.0.2.2:8080';
-// const baseURL = 'http://localhost:8080' 
+// const baseURL = 'https://f54fceb40ac5.ngrok-free.app' 
 
 const apiClient = axios.create({
   baseURL: baseURL,
