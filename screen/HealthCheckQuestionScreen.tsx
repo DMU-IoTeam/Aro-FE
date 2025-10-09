@@ -6,6 +6,7 @@ import {
   Pressable,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Container from '../layouts/Container';
@@ -20,9 +21,7 @@ import layout from '../constants/layout';
 
 // Define navigation param types
 type ParamList = {
-  HealthCheckQuestion: {
-    questionId?: string;
-  };
+  HealthCheckQuestion: {questionId?: string};
 };
 
 type HealthCheckQuestionRouteProp = RouteProp<
@@ -41,6 +40,7 @@ const HealthCheckQuestionScreen = () => {
   const [optionType, setOptionType] = useState<'default' | 'custom'>('default');
   const [options, setOptions] = useState<string[]>([...defaultOptions]);
   const [customOptionInput, setCustomOptionInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (questionId) {
@@ -53,19 +53,26 @@ const HealthCheckQuestionScreen = () => {
     }
   }, [questionId, questions]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (text.trim() === '') {
       Alert.alert('오류', '질문 내용을 입력해주세요.');
       return;
     }
-    const questionData = {text, optionType, options};
-
-    if (questionId) {
-      updateQuestion({id: questionId, ...questionData});
-    } else {
-      addQuestion(questionData);
+    setIsSaving(true);
+    try {
+      const questionData = {text, optionType, options};
+      if (questionId) {
+        await updateQuestion({id: questionId, ...questionData});
+      } else {
+        await addQuestion(questionData);
+      }
+      navigation.goBack();
+    } catch (error) {
+      console.error('Failed to save question:', error);
+      Alert.alert('오류', '저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
     }
-    navigation.goBack();
   };
 
   const handleSetOptionType = (type: 'default' | 'custom') => {
@@ -73,7 +80,17 @@ const HealthCheckQuestionScreen = () => {
     if (type === 'default') {
       setOptions([...defaultOptions]);
     } else {
-      setOptions([]);
+      // If switching to custom from a pre-existing question, keep options
+      if (questionId) {
+        const existingQuestion = questions.find(q => q.id === questionId);
+        if (existingQuestion && existingQuestion.optionType === 'custom') {
+          setOptions(existingQuestion.options);
+        } else {
+          setOptions([]);
+        }
+      } else {
+        setOptions([]);
+      }
     }
   };
 
@@ -175,7 +192,11 @@ const HealthCheckQuestionScreen = () => {
       </ScrollView>
 
       <View style={styles.saveButtonContainer}>
-        <CommonButton onPress={handleSave}>저장</CommonButton>
+        {isSaving ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <CommonButton onPress={handleSave}>저장</CommonButton>
+        )}
       </View>
     </Container>
   );

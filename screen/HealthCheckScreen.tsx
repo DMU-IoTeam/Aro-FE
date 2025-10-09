@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,13 +6,13 @@ import {
   Pressable,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import CommonButton from '../components/common/CommonButton';
 import {useHealthCheckStore} from '../store/healthCheck.store';
-import COLOR from '../constants/color';
 import layout from '../constants/layout';
 
 // Define navigation param types for type safety
@@ -28,14 +28,34 @@ type HealthCheckScreenNavigationProp = StackNavigationProp<
 
 const HealthCheckScreen = () => {
   const navigation = useNavigation<HealthCheckScreenNavigationProp>();
-  const {questions, deleteQuestion} = useHealthCheckStore();
+  const {questions, isLoading, fetchQuestions, deleteQuestion} =
+    useHealthCheckStore();
+
+  // Fetch questions when the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchQuestions();
+    }, []),
+  );
 
   const handleDelete = (id: string) => {
     Alert.alert('질문 삭제', '정말로 이 질문을 삭제하시겠습니까?', [
       {text: '취소', style: 'cancel'},
-      {text: '삭제', style: 'destructive', onPress: () => deleteQuestion(id)},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => deleteQuestion(id),
+      },
     ]);
   };
+
+  if (isLoading && questions.length === 0) {
+    return (
+      <Container>
+        <ActivityIndicator style={{marginTop: 50}} size="large" />
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -52,6 +72,8 @@ const HealthCheckScreen = () => {
       <FlatList
         data={questions}
         keyExtractor={item => item.id}
+        onRefresh={fetchQuestions} // Add pull-to-refresh
+        refreshing={isLoading}
         renderItem={({item}) => (
           <Pressable
             style={styles.questionItem}
@@ -78,9 +100,11 @@ const HealthCheckScreen = () => {
           </Pressable>
         )}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
-          </View>
+          !isLoading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
+            </View>
+          ) : null
         }
       />
     </Container>
