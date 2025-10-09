@@ -6,15 +6,19 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import {Calendar, LocaleConfig} from 'react-native-calendars';
-import type {DateData} from 'react-native-calendars/src/types';
+import {
+  Calendar,
+  LocaleConfig,
+  CalendarUtils,
+  DateData,
+} from 'react-native-calendars';
 import Container from '../layouts/Container';
 import {useSeniorStore} from '../store/senior.store';
-import {useCalendarStore} from '../store/calendar.store';
+import {useHealthAnswerStore} from '../store/healthAnswer.store';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
 
-// react-native-calendars 한글 설정
+// react-native-calendars 한글 설정 (중복되지만, 독립적인 화면을 위해 포함)
 LocaleConfig.locales['ko'] = {
   monthNames: [
     '1월',
@@ -50,25 +54,50 @@ LocaleConfig.locales['ko'] = {
 };
 LocaleConfig.defaultLocale = 'ko';
 
-const CalendarScreen = () => {
+const getMonthDateRange = (dateString: string) => {
+  const date = new Date(dateString);
+  const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return {
+    startDate: CalendarUtils.getCalendarDateString(startDate),
+    endDate: CalendarUtils.getCalendarDateString(endDate),
+  };
+};
+
+const HealthCheckCalendarScreen = () => {
   const {seniors} = useSeniorStore();
-  const {markedDates, logsByDate, isLoading, error, fetchCalendarData} =
-    useCalendarStore();
+  const {
+    markedDates,
+    answersByDate,
+    isLoading,
+    fetchAnswers,
+  } = useHealthAnswerStore();
 
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(
+    CalendarUtils.getCalendarDateString(new Date()),
+  );
 
-  useEffect(() => {
+  const fetchAllData = (date: string) => {
     if (seniors.length > 0) {
       const seniorId = seniors[0].id;
-      fetchCalendarData(seniorId);
+      const {startDate, endDate} = getMonthDateRange(date);
+      fetchAnswers(seniorId, startDate, endDate);
     }
-  }, [seniors, fetchCalendarData]);
+  };
+
+  useEffect(() => {
+    fetchAllData(selectedDate);
+  }, [seniors]);
 
   const onDayPress = (day: DateData) => {
     setSelectedDate(day.dateString);
   };
 
-  const logsForSelectedDate = logsByDate[selectedDate] || [];
+  const onMonthChange = (month: DateData) => {
+    fetchAllData(month.dateString);
+  };
+
+  const healthAnswers = answersByDate[selectedDate] || [];
 
   if (seniors.length === 0) {
     return (
@@ -91,6 +120,7 @@ const CalendarScreen = () => {
             },
           }}
           onDayPress={onDayPress}
+          onMonthChange={onMonthChange}
           monthFormat={'yyyy년 MM월'}
           theme={{
             arrowColor: COLOR.DEFAULT_COLOR,
@@ -100,31 +130,25 @@ const CalendarScreen = () => {
 
         <View style={styles.logContainer}>
           {isLoading && <ActivityIndicator color={COLOR.DEFAULT_COLOR} />}
-          {error && <Text>기록을 불러오는 데 실패했습니다.</Text>}
-          {!isLoading && !error && (
-            <>
-              {logsForSelectedDate.length > 0 ? (
-                logsForSelectedDate.map(log => (
-                  <View key={log.logId} style={styles.logItem}>
-                    <Text style={styles.logTime}>{log.scheduleTime}</Text>
-                    {log.medicines.map(med => (
-                      <View key={med.id} style={styles.medicineItem}>
-                        <Text style={styles.medicineName}>{med.name}</Text>
-                        {med.memo && (
-                          <Text style={styles.medicineMemo}>{med.memo}</Text>
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.noLogText}>
-                  {selectedDate
-                    ? '선택한 날짜에 복약 기록이 없습니다.'
-                    : '날짜를 선택하여 복약 기록을 확인하세요.'}
-                </Text>
-              )}
-            </>
+
+          {!isLoading && healthAnswers.length === 0 && (
+            <Text style={styles.noLogText}>
+              선택한 날짜에 건강 답변 기록이 없습니다.
+            </Text>
+          )}
+
+          {healthAnswers.length > 0 && (
+            <View style={styles.logSection}>
+              <Text style={styles.sectionTitle}>건강 답변 기록</Text>
+              {healthAnswers.map((answer, index) => (
+                <View key={`health-${index}`} style={styles.logItem}>
+                  <Text style={styles.questionText}>
+                    Q: {answer.questionText}
+                  </Text>
+                  <Text style={styles.answerText}>A: {answer.answerText}</Text>
+                </View>
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -141,6 +165,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: layout.HORIZONTAL_PADDING,
   },
+  logSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
   logItem: {
     backgroundColor: 'white',
     borderRadius: layout.BORDER_RADIUS,
@@ -149,22 +181,15 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     borderWidth: 1,
   },
-  logTime: {
+  questionText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: COLOR.DEFAULT_COLOR,
-  },
-  medicineItem: {
-    marginLeft: 10,
+    fontWeight: '500',
     marginBottom: 5,
   },
-  medicineName: {
+  answerText: {
     fontSize: 16,
-  },
-  medicineMemo: {
-    fontSize: 14,
-    color: 'gray',
+    color: COLOR.DEFAULT_COLOR,
+    fontWeight: 'bold',
   },
   noLogText: {
     textAlign: 'center',
@@ -173,4 +198,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CalendarScreen;
+export default HealthCheckCalendarScreen;

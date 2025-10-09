@@ -28,6 +28,7 @@ import ScheduleSettingScreen from './screen/ScheduleSettingScreen';
 import CalendarScreen from './screen/CalendarScreen';
 import PhotoUploadScreen from './screen/PhotoUploadScreen';
 import HealthCheckQuestionScreen from './screen/HealthCheckQuestionScreen';
+import HealthCheckCalendarScreen from './screen/HealthCheckCalendarScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -80,6 +81,11 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
         name="HealthCheckScreen"
         component={HealthCheckScreen}
         options={{title: '건강 체크'}}
+      />
+      <Stack.Screen
+        name="HealthCheckCalendarScreen"
+        component={HealthCheckCalendarScreen}
+        options={{title: '건강 답변 캘린더'}}
       />
       <Stack.Screen
         name="ScheduleScreen"

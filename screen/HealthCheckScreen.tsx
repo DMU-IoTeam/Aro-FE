@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,9 +6,8 @@ import {
   Pressable,
   FlatList,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import CommonButton from '../components/common/CommonButton';
@@ -18,6 +17,7 @@ import layout from '../constants/layout';
 // Define navigation param types for type safety
 type RootStackParamList = {
   HealthCheckQuestion: {questionId?: string};
+  CalendarScreen: undefined; // Add CalendarScreen for navigation
   // ... other screens
 };
 
@@ -28,34 +28,14 @@ type HealthCheckScreenNavigationProp = StackNavigationProp<
 
 const HealthCheckScreen = () => {
   const navigation = useNavigation<HealthCheckScreenNavigationProp>();
-  const {questions, isLoading, fetchQuestions, deleteQuestion} =
-    useHealthCheckStore();
-
-  // Fetch questions when the screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchQuestions();
-    }, []),
-  );
+  const {questions, deleteQuestion} = useHealthCheckStore();
 
   const handleDelete = (id: string) => {
     Alert.alert('질문 삭제', '정말로 이 질문을 삭제하시겠습니까?', [
       {text: '취소', style: 'cancel'},
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: () => deleteQuestion(id),
-      },
+      {text: '삭제', style: 'destructive', onPress: () => deleteQuestion(id)},
     ]);
   };
-
-  if (isLoading && questions.length === 0) {
-    return (
-      <Container>
-        <ActivityIndicator style={{marginTop: 50}} size="large" />
-      </Container>
-    );
-  }
 
   return (
     <Container>
@@ -63,17 +43,22 @@ const HealthCheckScreen = () => {
         <Text style={styles.headerText}>건강 체크 질문 관리</Text>
       </View>
 
-      <View style={styles.addQuestionButtonContainer}>
-        <CommonButton onPress={() => navigation.navigate('HealthCheckQuestion')}>
-          + 새로운 질문 추가
+      <View style={styles.buttonContainer}>
+        <CommonButton
+          style={styles.halfButton}
+          onPress={() => navigation.navigate('HealthCheckQuestion')}>
+          + 질문 추가
+        </CommonButton>
+        <CommonButton
+          style={styles.halfButton}
+          onPress={() => navigation.navigate('HealthCheckCalendarScreen')}>
+          답변 확인
         </CommonButton>
       </View>
 
       <FlatList
         data={questions}
         keyExtractor={item => item.id}
-        onRefresh={fetchQuestions} // Add pull-to-refresh
-        refreshing={isLoading}
         renderItem={({item}) => (
           <Pressable
             style={styles.questionItem}
@@ -100,11 +85,9 @@ const HealthCheckScreen = () => {
           </Pressable>
         )}
         ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
-            </View>
-          ) : null
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
+          </View>
         }
       />
     </Container>
@@ -122,8 +105,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  addQuestionButtonContainer: {
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
     marginBottom: 20,
+  },
+  halfButton: {
+    flex: 1,
   },
   questionItem: {
     flexDirection: 'row',

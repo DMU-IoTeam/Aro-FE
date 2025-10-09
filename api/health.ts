@@ -23,6 +23,21 @@ export const getHealthQuestions = async (
   }));
 };
 
+// API to get health answers for a date range
+export const getHealthAnswers = async (
+  seniorId: number,
+  startDate: string,
+  endDate: string,
+) => {
+  const response = await apiClient.get(
+    `/api/seniors/${seniorId}/health-answers`,
+    {
+      params: {startDate, endDate},
+    },
+  );
+  return response.data;
+};
+
 // API to post a new health question
 export const postHealthQuestion = async (
   seniorId: number,
