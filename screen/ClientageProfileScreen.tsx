@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -7,8 +7,13 @@ import {
   Text,
   Pressable,
   Image,
+  Platform,
+  FlatList,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import Container from '../layouts/Container';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
@@ -17,6 +22,11 @@ import COLOR from '../constants/color';
 import layout from '../constants/layout';
 import {launchImageLibrary} from 'react-native-image-picker';
 import {RegisterSeniorPayload} from '../api/senior';
+
+// YYYY-MM-DD 형식으로 날짜 포맷하는 함수
+const formatDate = (date: Date) => {
+  return date.toISOString().split('T')[0];
+};
 
 const ClientageProfileScreen = () => {
   const navigation = useNavigation();
@@ -31,10 +41,15 @@ const ClientageProfileScreen = () => {
     setDisplayImageUri,
     clearForm,
     registerSenior,
-    updateSenior, // 스토어에서 updateSenior 액션 가져오기
+    updateSenior,
   } = useSeniorStore();
 
   const isEditing = seniors.length > 0;
+
+  // DatePicker 상태
+  const [date, setDate] = useState(new Date(1950, 0, 1));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [bloodTypePickerVisible, setBloodTypePickerVisible] = useState(false);
 
   useEffect(() => {
     if (isEditing) {
@@ -50,6 +65,9 @@ const ClientageProfileScreen = () => {
       };
       setFullFormData(formValues);
 
+      if (seniorToEdit.birthDate) {
+        setDate(new Date(seniorToEdit.birthDate));
+      }
       if (seniorToEdit.profileImage) {
         setDisplayImageUri(seniorToEdit.profileImage);
       }
@@ -72,6 +90,19 @@ const ClientageProfileScreen = () => {
     });
   };
 
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      const formattedDate = formatDate(selectedDate);
+      setDate(selectedDate);
+      setFormData('birthDate', formattedDate);
+    }
+    // Android에서는 사용자가 닫으면 자동으로 false가 되도록 설정
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+  };
+
   const handleRegister = async () => {
     if (!formData.name || !formData.birthDate) {
       Alert.alert('오류', '이름과 생년월일은 필수 항목입니다.');
@@ -80,13 +111,7 @@ const ClientageProfileScreen = () => {
 
     const dataToSend = {...formData};
 
-    if (dataToSend.gender === '남성') {
-      dataToSend.gender = 'MALE';
-    } else if (dataToSend.gender === '여성') {
-      dataToSend.gender = 'FEMALE';
-    }
-
-    // TODO: email 값의 실제 출처를 확인하여 반영해야 합니다.
+    // TODO: email 값의 실제 출처를 확인하여 반영해야 합니다。
     if (!dataToSend.email) {
       dataToSend.email = 'admin@example.com';
     }
@@ -114,7 +139,7 @@ const ClientageProfileScreen = () => {
   };
 
   return (
-    <Container>
+    <Container style={{padding: 0}}>
       <ScrollView>
         <View style={{marginTop: 36}}>
           <View
@@ -153,45 +178,137 @@ const ClientageProfileScreen = () => {
             </Pressable>
           </View>
 
-          <Input
-            placeholder="이름"
-            style={styles.inputLayout}
-            value={formData.name}
-            onChangeText={text => setFormData('name', text)}
-          />
-          <Input
-            placeholder="생년월일 (예: 1950-01-01)"
-            style={styles.inputLayout}
-            value={formData.birthDate}
-            onChangeText={text => setFormData('birthDate', text)}
-          />
-          <Input
-            placeholder="성별 (예: 남성/여성)"
-            style={styles.inputLayout}
-            value={formData.gender}
-            onChangeText={text => setFormData('gender', text)}
-          />
-          <Input
-            placeholder="주소"
-            style={styles.inputLayout}
-            value={formData.address}
-            onChangeText={text => setFormData('address', text)}
-          />
-          <Input
-            placeholder="병력"
-            style={styles.inputLayout}
-            value={formData.medicalHistory}
-            onChangeText={text => setFormData('medicalHistory', text)}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-          <Input
-            placeholder="혈액형 (예: A+)"
-            style={styles.inputLayout}
-            value={formData.bloodType}
-            onChangeText={text => setFormData('bloodType', text)}
-          />
+          {/* 기본 정보 */}
+          <View style={{borderWidth: 1, borderColor: '#E5E7EB'}}>
+            <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 30}}>
+              기본 정보
+            </Text>
+
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>이름</Text>
+              <Input
+                placeholder="이름을 입력하세요"
+                value={formData.name}
+                onChangeText={text => setFormData('name', text)}
+              />
+            </View>
+
+            {/* 생년월일 DatePicker */}
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>생년월일</Text>
+              <Pressable onPress={() => setShowDatePicker(true)}>
+                <View style={styles.dateInput}>
+                  <Text style={styles.dateText}>
+                    {formData.birthDate || '날짜를 선택하세요'}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={date}
+                mode={'date'}
+                display="spinner" // 스피너 형태로 표시
+                onChange={onDateChange}
+              />
+            )}
+
+            {/* 성별 라디오 버튼 */}
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>성별</Text>
+              <View style={styles.radioContainer}>
+                <Pressable
+                  style={[
+                    styles.radioButton,
+                    formData.gender === 'MALE' && styles.radioButtonActive,
+                  ]}
+                  onPress={() => setFormData('gender', 'MALE')}>
+                  <Text
+                    style={[
+                      styles.radioButtonText,
+                      formData.gender === 'MALE' &&
+                        styles.radioButtonTextActive,
+                    ]}>
+                    남성
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.radioButton,
+                    formData.gender === 'FEMALE' && styles.radioButtonActive,
+                  ]}
+                  onPress={() => setFormData('gender', 'FEMALE')}>
+                  <Text
+                    style={[
+                      styles.radioButtonText,
+                      formData.gender === 'FEMALE' &&
+                        styles.radioButtonTextActive,
+                    ]}>
+                    여성
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>주소</Text>
+              <Input
+                placeholder="주소를 입력하세요"
+                value={formData.address}
+                onChangeText={text => setFormData('address', text)}
+              />
+            </View>
+          </View>
+
+          {/* 의료 정보 */}
+          <View>
+            <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 30}}>
+              의료 정보
+            </Text>
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>병력</Text>
+              <Input
+                placeholder="병력 정보를 입력하세요"
+                value={formData.medicalHistory}
+                onChangeText={text => setFormData('medicalHistory', text)}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.inputLayout}>
+              <Text style={styles.label}>혈액형</Text>
+              <Pressable
+                onPress={() => setBloodTypePickerVisible(prev => !prev)}>
+                <View style={styles.dateInput}>
+                  <Text style={styles.dateText}>
+                    {formData.bloodType || '혈액형을 선택하세요'}
+                  </Text>
+                </View>
+              </Pressable>
+              {bloodTypePickerVisible && (
+                <View style={styles.dropdownContainer}>
+                  <FlatList
+                    data={['A', 'B', 'O', 'AB']}
+                    keyExtractor={item => item}
+                    renderItem={({item}) => (
+                      <Pressable
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setFormData('bloodType', item);
+                          setBloodTypePickerVisible(false);
+                        }}>
+                        <Text>{item}</Text>
+                      </Pressable>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
         </View>
 
         <View style={{marginTop: 10}}>
@@ -209,5 +326,69 @@ export default ClientageProfileScreen;
 const styles = StyleSheet.create({
   inputLayout: {
     marginBottom: 28,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#374151',
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: layout.BORDER_RADIUS,
+    padding: 12,
+    backgroundColor: 'white',
+    height: 50, // Input과 높이 맞춤
+    justifyContent: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  radioButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: layout.BORDER_RADIUS,
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  radioButtonActive: {
+    backgroundColor: COLOR.DEFAULT_COLOR,
+    borderColor: COLOR.DEFAULT_COLOR,
+  },
+  radioButtonText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  radioButtonTextActive: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: layout.BORDER_RADIUS,
+    backgroundColor: 'white',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    bottom: 50, // Position above the input
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: layout.BORDER_RADIUS,
+    zIndex: 1,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
 });
