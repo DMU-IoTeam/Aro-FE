@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import {
   Calendar,
@@ -110,20 +111,40 @@ const HealthCheckCalendarScreen = () => {
     <Container>
       <ScrollView>
         <Calendar
-          markedDates={{
-            ...markedDates,
-            [selectedDate]: {
-              ...markedDates[selectedDate],
-              selected: true,
-              selectedColor: COLOR.DEFAULT_COLOR,
-            },
-          }}
           onDayPress={onDayPress}
           onMonthChange={onMonthChange}
           monthFormat={'yyyy년 MM월'}
           theme={{
             arrowColor: COLOR.DEFAULT_COLOR,
             todayTextColor: COLOR.DEFAULT_COLOR,
+          }}
+          dayComponent={({date, state}: any) => {
+            const ymd = date?.dateString;
+            const isSelected = selectedDate === ymd;
+            const hasLog = !!answersByDate[ymd];
+            const disabled = state === 'disabled';
+
+            return (
+              <Pressable onPress={() => onDayPress(date)} style={styles.dayCell}>
+                {isSelected ? (
+                  <View style={styles.selectedBox}>
+                    <Text style={styles.selectedText}>{date.day}</Text>
+                    {hasLog && <View style={styles.whiteDot} />}
+                  </View>
+                ) : (
+                  <>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        disabled && {color: '#CBD5E1'},
+                      ]}>
+                      {date.day}
+                    </Text>
+                    {hasLog && <View style={styles.greenDot} />}
+                  </>
+                )}
+              </Pressable>
+            );
           }}
         />
 
@@ -162,7 +183,7 @@ const styles = StyleSheet.create({
   },
   logContainer: {
     marginTop: 20,
-    paddingHorizontal: layout.HORIZONTAL_PADDING,
+    paddingHorizontal: layout.HORIZONTAL_VALUE,
   },
   logSection: {
     marginBottom: 20,
@@ -194,6 +215,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     color: 'gray',
+  },
+  dayCell: {
+    alignItems: 'center',
+    height: 48,
+  },
+  selectedBox: {
+    width: 34,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: '#3B82F6',
+    alignItems: 'center',
+  },
+  selectedText: {
+    color: 'white',
+    fontWeight: '700',
+  },
+  whiteDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'white',
+    marginTop: 4,
+  },
+  dayText: {
+    color: '#111827',
+    fontWeight: '600',
+  },
+  greenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginTop: 4,
   },
 });
 
