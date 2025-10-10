@@ -79,9 +79,8 @@ const HealthCheckCalendarScreen = () => {
 
   const fetchAllData = (date: string) => {
     if (seniors.length > 0) {
-      const seniorId = seniors[0].id;
       const {startDate, endDate} = getMonthDateRange(date);
-      fetchAnswers(seniorId, startDate, endDate);
+      fetchAnswers(startDate, endDate);
     }
   };
 

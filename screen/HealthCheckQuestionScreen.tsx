@@ -8,6 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import Input from '../components/common/Input';
 import {
@@ -16,17 +17,25 @@ import {
 } from '../store/healthCheck.store';
 import layout from '../constants/layout';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCircleCheck, faCirclePlus} from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleCheck,
+  faCirclePlus,
+  faCalendarDays,
+} from '@fortawesome/free-solid-svg-icons';
 
 // Define navigation param types
- type ParamList = {
+type RootStackParamList = {
   HealthCheckQuestion: {questionId?: string};
+  HealthCheckCalendarScreen: undefined;
 };
 
- type HealthCheckQuestionRouteProp = RouteProp<
-  ParamList,
+type HealthCheckQuestionRouteProp = RouteProp<
+  RootStackParamList,
   'HealthCheckQuestion'
 >;
+
+type HealthCheckQuestionScreenNavigationProp =
+  StackNavigationProp<RootStackParamList>;
 
 const baseChips = [
   {label: '아주 좋음', bg: '#E7F8EF', text: '#047857'},
@@ -36,7 +45,7 @@ const baseChips = [
 ];
 
 const HealthCheckQuestionScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<HealthCheckQuestionScreenNavigationProp>();
   const route = useRoute<HealthCheckQuestionRouteProp>();
   const questionId = route.params?.questionId;
 
@@ -103,6 +112,7 @@ const HealthCheckQuestionScreen = () => {
 
   return (
     <Container style={{paddingHorizontal: 0}}>
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>

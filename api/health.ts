@@ -32,11 +32,9 @@ export const getHealthAnswers = async (
   startDate: string,
   endDate: string,
 ) => {
+  console.log(`Fetching health answers for seniorId=${seniorId}, startDate=${startDate}, endDate=${endDate}`);
   const response = await apiClient.get(
-    `/api/seniors/${seniorId}/health-answers`,
-    {
-      params: {startDate, endDate},
-    },
+    `/api/seniors/${seniorId}/health-answers?startDate=${startDate}&endDate=${endDate}`,
   );
   return response.data;
 };

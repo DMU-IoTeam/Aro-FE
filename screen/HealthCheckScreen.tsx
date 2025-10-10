@@ -8,10 +8,7 @@ import {
   View,
   Pressable,
 } from 'react-native';
-import {
-  useNavigation,
-  useFocusEffect,
-} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import layout from '../constants/layout';
@@ -25,6 +22,7 @@ import {
   faGear,
 } from '@fortawesome/free-solid-svg-icons';
 import {useHealthCheckStore} from '../store/healthCheck.store';
+import {faCalendarDays} from '@fortawesome/free-regular-svg-icons';
 
 // Navigation types
 type RootStackParamList = {
@@ -51,7 +49,8 @@ const mapOptionTone = (label: string) => {
   const normalized = label.replace(/\s+/g, '').toLowerCase();
   if (normalized.includes('아주좋')) return toneStyles.strongGreen;
   if (normalized.includes('좋')) return toneStyles.strongGreen;
-  if (normalized.includes('전혀') || normalized.includes('없')) return toneStyles.blue;
+  if (normalized.includes('전혀') || normalized.includes('없'))
+    return toneStyles.blue;
   if (normalized.includes('조금')) return toneStyles.yellow;
   if (normalized.includes('아주나쁨')) return toneStyles.red;
   if (normalized.includes('나쁨')) return toneStyles.amber;
@@ -93,6 +92,13 @@ const HealthCheckScreen = () => {
 
   return (
     <Container style={{paddingHorizontal: 0}}>
+      <Pressable
+        style={styles.calendarButton}
+        onPress={() => navigation.navigate('HealthCheckCalendarScreen')}>
+        <FontAwesomeIcon icon={faCalendarDays} size={16} color="#4B5563" />
+        <Text style={styles.calendarButtonText}>날짜별 건강상태 확인</Text>
+      </Pressable>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
@@ -110,7 +116,7 @@ const HealthCheckScreen = () => {
             const isEnabled = enabledMap[item.id] ?? true;
             const visibleChips = chips.slice(0, 4);
             const remain = chips.length - visibleChips.length;
-            console.log(item)
+            console.log(item);
             return (
               <View key={item.id} style={styles.questionCard}>
                 <View style={styles.cardHeader}>
@@ -122,7 +128,9 @@ const HealthCheckScreen = () => {
                     <Text style={styles.orderBadgeText}>{idx + 1}</Text>
                   </View>
                   <View style={{flex: 1}}>
-                    <Text style={styles.questionTitle}>{item.questionText}</Text>
+                    <Text style={styles.questionTitle}>
+                      {item.questionText}
+                    </Text>
                   </View>
                   <View style={styles.cardActions}>
                     <Pressable
@@ -131,11 +139,7 @@ const HealthCheckScreen = () => {
                           questionId: item.id,
                         })
                       }>
-                      <FontAwesomeIcon
-                        icon={faPen}
-                        size={16}
-                        color="#94A3B8"
-                      />
+                      <FontAwesomeIcon icon={faPen} size={16} color="#94A3B8" />
                     </Pressable>
                   </View>
                 </View>
@@ -146,22 +150,30 @@ const HealthCheckScreen = () => {
                     {visibleChips.map(opt => (
                       <View
                         key={opt.label}
-                        style={[styles.optionChip, {backgroundColor: opt.style.bg}]}
-                      >
+                        style={[
+                          styles.optionChip,
+                          {backgroundColor: opt.style.bg},
+                        ]}>
                         <Text
-                          style={[styles.optionChipText, {color: opt.style.text}]}
-                        >
+                          style={[
+                            styles.optionChipText,
+                            {color: opt.style.text},
+                          ]}>
                           {opt.label}
                         </Text>
                       </View>
                     ))}
                     {remain > 0 && (
                       <View
-                        style={[styles.optionChip, {backgroundColor: toneStyles.neutral.bg}]}
-                      >
+                        style={[
+                          styles.optionChip,
+                          {backgroundColor: toneStyles.neutral.bg},
+                        ]}>
                         <Text
-                          style={[styles.optionChipText, {color: toneStyles.neutral.text}]}
-                        >
+                          style={[
+                            styles.optionChipText,
+                            {color: toneStyles.neutral.text},
+                          ]}>
                           +{remain}
                         </Text>
                       </View>
@@ -179,7 +191,6 @@ const HealthCheckScreen = () => {
           <FontAwesomeIcon icon={faPlus} size={18} color="#64748B" />
           <Text style={styles.addCardText}>새 질문 추가</Text>
         </Pressable>
-
       </ScrollView>
     </Container>
   );
@@ -319,5 +330,18 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: '#94A3B8',
+  },
+
+  calendarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    paddingHorizontal: layout.HORIZONTAL_VALUE,
+  },
+  calendarButtonText: {
+    color: '#374151',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
