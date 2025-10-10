@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -7,14 +7,17 @@ import {
   Text,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useMedicationScheduleStore} from '../store/medicationSchedule.store';
 import {useSeniorStore} from '../store/senior.store';
 import COLOR from '../constants/color';
 import Container from '../layouts/Container';
 import layout from '../constants/layout';
 import {MedicationItem} from '../store/medicationSchedule.store';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faBars, faPlus} from '@fortawesome/free-solid-svg-icons';
 
 const MedicineTimeScreen = () => {
   const navigation = useNavigation();
@@ -28,6 +31,16 @@ const MedicineTimeScreen = () => {
       fetchSchedule(seniorId);
     }
   }, [seniors, fetchSchedule]);
+
+  // 화면에 다시 포커스될 때마다 서버 데이터 재요청
+  useFocusEffect(
+    React.useCallback(() => {
+      if (seniors.length > 0) {
+        const seniorId = seniors[0].id;
+        fetchSchedule(seniorId);
+      }
+    }, [seniors, fetchSchedule]),
+  );
 
   const handleDelete = (scheduleId: number) => {
     Alert.alert('삭제 확인', '이 일정을 정말 삭제하시겠습니까?', [
@@ -47,7 +60,28 @@ const MedicineTimeScreen = () => {
     ]);
   };
 
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  // 주간 요일/날짜
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const week = useMemo(() => {
+    const today = selectedDate;
+    const day = today.getDay(); // 0(Sun)~6(Sat)
+    const mondayOffset = (day + 6) % 7; // Monday as start
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - mondayOffset);
+    const labels = ['월', '화', '수', '목', '금', '토', '일'];
+    const arr = Array.from({length: 7}, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return {
+        key: i,
+        label: labels[i],
+        date: d.getDate(),
+        full: d,
+      };
+    });
+    return arr;
+  }, [selectedDate]);
 
   if (seniors.length === 0) {
     return (
@@ -75,35 +109,52 @@ const MedicineTimeScreen = () => {
 
   return (
     <Container>
-      {/* 요일 (현재는 UI 표시용) */}
-      <View style={{flexDirection: 'row'}}>
-        {days.map((item, index) => (
-          <View
-            key={index}
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text style={{fontSize: 24}}>{item}</Text>
-            <View
-              style={[
-                styles.dayContainer,
-                {backgroundColor: index === 2 ? COLOR.DEFAULT_COLOR : '#eee'},
-              ]}>
-              <Text style={{fontSize: 24, color: index === 2 ? 'white' : 'black'}}>
-                {String(index + 1).padStart(2, '0')}
-              </Text>
-            </View>
-          </View>
-        ))}
-        <Pressable onPress={()=>{navigation.navigate('CalendarScreen')}}><Text>캘린더</Text></Pressable>
+      {/* 상단 주간 바 + 메뉴 */}
+      <View style={styles.weekHeader}>
+        <View style={styles.weekRow}>
+          {week.map(({key, label, date, full}) => {
+            const isToday = new Date().toDateString() === full.toDateString();
+            const isSelected = selectedDate.toDateString() === full.toDateString();
+            return (
+              <Pressable
+                key={key}
+                style={styles.weekCell}
+                onPress={() => setSelectedDate(full)}>
+                <Text style={[styles.weekLabel, isSelected && {color: '#111827'}]}>
+                  {label}
+                </Text>
+                <View
+                  style={[
+                    styles.dateChip,
+                    isSelected && styles.dateChipSelected,
+                    !isSelected && isToday && styles.dateChipToday,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.dateChipText,
+                      isSelected && styles.dateChipTextSelected,
+                    ]}>
+                    {date}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Pressable
+          onPress={() => navigation.navigate('MedicineTimeSettingScreen')}
+          hitSlop={10}>
+          <FontAwesomeIcon icon={faBars} size={18} color="#64748B" />
+        </Pressable>
       </View>
 
-      {/* 복약 일정 추가 버튼 */}
-      <View style={{marginTop: 8, marginBottom: 14}}>
+      {/* 오늘의 복약 일정 헤더 */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>오늘의 복약 일정</Text>
         <Pressable
-          onPress={() => {
-            navigation.navigate('MedicineTimeSettingScreen');
-          }}
-          style={styles.plusButton}>
-          <Text style={styles.plusButtonText}>+</Text>
+          onPress={() => navigation.navigate('MedicineTimeSettingScreen')}
+          style={styles.addFab}>
+          <FontAwesomeIcon icon={faPlus} size={16} color="white" />
         </Pressable>
       </View>
 
@@ -140,32 +191,36 @@ export const MedicineScheduleItem = ({
   medicine,
   onDelete,
 }: MedicineScheduleItemProps) => {
+  const navigation = useNavigation();
   return (
     <View style={styles.itemContainer}>
-      {/* 시간 및 삭제 버튼 */}
-      <View style={styles.timeHeader}>
-        <View style={{flexDirection: 'row', alignItems: 'flex-end', gap: 8}}>
-          <Text style={{fontSize: 24, lineHeight: 24}}>{time}</Text>
-          <Text style={{fontSize: 16}}>{isAm ? '오전' : '오후'}</Text>
-        </View>
-        <Pressable onPress={() => onDelete(scheduleId)} style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>삭제</Text>
-        </Pressable>
-      </View>
+      {/* 시간 라벨 */}
+      <Text style={styles.timeLabel}>{isAm ? '오전' : '오후'} ({time})</Text>
+
       {/* 약 목록 */}
-      <View style={{gap: 8, paddingHorizontal: 5, paddingVertical: 8}}>
-        {medicine.map(item => (
-          <View style={styles.medicineItem} key={item.id}>
-            <View style={{flex: 1}}>
-              <Text style={{fontSize: 18, lineHeight: 18}}>{item.name}</Text>
-              {item.memo && (
-                <Text style={{fontSize: 14, color: 'gray', marginTop: 4}}>
-                  {item.memo}
-                </Text>
-              )}
+      <View style={{gap: 10}}>
+        {medicine.map(item => {
+          return (
+            <View style={styles.medicineCard} key={item.id}>
+              <Image
+                source={require('../assets/medicine.png')}
+                style={styles.medIcon}
+                resizeMode="contain"
+              />
+              <View style={{flex: 1}}>
+                <Text style={styles.medName}>{item.name}</Text>
+                <Text style={styles.medMeta}>{item.memo || '메모 없음'}</Text>
+              </View>
+              <View style={styles.actionRow}>
+                <Pressable
+                  style={[styles.actionBtn, styles.actionBtnDelete]}
+                  onPress={() => onDelete(scheduleId)}>
+                  <Text style={[styles.actionText, styles.actionTextDelete]}>삭제</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
@@ -181,54 +236,135 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 6,
   },
-  plusButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 9999,
-    backgroundColor: COLOR.DEFAULT_COLOR,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  plusButtonText: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 24,
-    lineHeight: 40,
-  },
-  itemContainer: {
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: 'white',
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 8,
-  },
-  timeHeader: {
-    borderBottomColor: 'gray',
-    borderBottomWidth: 1,
-    gap: 8,
-    padding: 5,
+  weekHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  deleteButton: {
-    backgroundColor: '#EF4444', // red-500
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
+  weekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 1,
+    marginRight: 12,
   },
-  deleteButtonText: {
-    color: 'white',
+  weekCell: {
+    width: `${100 / 7}%`,
+    alignItems: 'center',
+    gap: 6,
+  },
+  weekLabel: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  dateChip: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateChipSelected: {
+    backgroundColor: '#EF4444',
+  },
+  dateChipToday: {
+    backgroundColor: '#DBEAFE',
+  },
+  dateChipText: {
+    fontSize: 14,
+    color: '#334155',
     fontWeight: '600',
   },
-  medicineItem: {
+  dateChipTextSelected: {
+    color: 'white',
+  },
+  sectionHeader: {
     flexDirection: 'row',
-    gap: 4,
-    padding: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  addFab: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLOR.DEFAULT_COLOR,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemContainer: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    borderColor: '#E5E7EB',
     borderWidth: 1,
-    borderColor: '#E5E7EB', // gray-200
-    borderRadius: 5,
+    marginBottom: 14,
+  },
+  timeLabel: {
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  medicineCard: {
+    flexDirection: 'row',
+    gap: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  medIcon: {
+    width: 40,
+    height: 40,
+  },
+  medName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  medMeta: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  actionBtn: {
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  actionBtnEdit: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'white',
+  },
+  actionBtnDelete: {
+    borderColor: '#EF4444',
+    backgroundColor: 'white',
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  actionTextEdit: {
+    color: '#3B82F6',
+  },
+  actionTextDelete: {
+    color: '#EF4444',
   },
 });
 

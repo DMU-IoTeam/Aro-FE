@@ -7,7 +7,7 @@ const CommonButton = ({children, onPress}) => {
     <Pressable
       style={{
         padding: layout.PADDING_VALUE,
-        backgroundColor: COLOR.DEFAULT_COLOR,
+        backgroundColor: '#3B82F6',
         borderRadius: layout.BORDER_RADIUS,
         justifyContent: 'center',
         alignItems: 'center',

@@ -22,7 +22,7 @@ const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
 const baseMinutes = Array.from({length: 60}, (_, i) =>
   i < 10 ? `0${i}` : `${i}`,
 );
-const baseAmPm = ['오전', '오후'];
+const AMPM = ['오전', '오후'] as const;
 
 const repeatedHours = Array(LOOP_COUNT).fill(baseHours).flat();
 const repeatedMinutes = Array(LOOP_COUNT).fill(baseMinutes).flat();
@@ -39,8 +39,20 @@ const MedicineTimeSettingScreen = () => {
   const [ampmIndex, setAmPmIndex] = useState(0);
 
   const [medicineName, setMedicineName] = useState('');
-  const [memo, setMemo] = useState('');
-  const [medicineArray, setMedicineArray] = useState<Array<{name: string; memo: string}>>([]);
+  const [dose, setDose] = useState('1');
+  const [method, setMethod] = useState<
+    '식전 30분' | '식후 30분' | '식사와 함께' | '시간 관계없이'
+  >('식후 30분');
+  const [medicineArray, setMedicineArray] = useState<
+    Array<{name: string; memo: string}>
+  >([]);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const beginWheel = () => setScrollEnabled(false);
+  const endWheel = () => setScrollEnabled(true);
+  useEffect(() => {
+    return () => setScrollEnabled(true);
+  }, []);
 
   const handleHourChange = (index: number) => {
     setHourIndex(index);
@@ -68,9 +80,10 @@ const MedicineTimeSettingScreen = () => {
       Alert.alert('오류', '약 이름을 입력해주세요.');
       return;
     }
-    setMedicineArray([...medicineArray, {name: medicineName, memo}]);
+    const memoText = `${method}${dose ? ` · ${dose}정` : ''}`;
+    setMedicineArray([...medicineArray, {name: medicineName, memo: memoText}]);
     setMedicineName('');
-    setMemo('');
+    setDose('1');
   };
 
   const handleSave = async () => {
@@ -78,13 +91,22 @@ const MedicineTimeSettingScreen = () => {
       Alert.alert('오류', '등록된 피보호자가 없습니다.');
       return;
     }
-    if (medicineArray.length === 0) {
-      Alert.alert('오류', '최소 하나 이상의 약을 추가해주세요.');
+
+    // 항목이 없으면 현재 입력으로 1개 구성
+    const items =
+      medicineArray.length > 0
+        ? medicineArray
+        : medicineName
+        ? [{name: medicineName, memo: `${method}${dose ? ` · ${dose}정` : ''}`}]
+        : [];
+
+    if (items.length === 0) {
+      Alert.alert('오류', '약물명을 입력해주세요.');
       return;
     }
 
     const userId = seniors[0].id;
-    const isAm = baseAmPm[ampmIndex] === '오전';
+    const isAm = AMPM[ampmIndex] === '오전';
     let hour = parseInt(repeatedHours[hourIndex], 10);
 
     if (isAm && hour === 12) {
@@ -99,7 +121,7 @@ const MedicineTimeSettingScreen = () => {
     const payload = {
       userId,
       time,
-      items: medicineArray,
+      items,
     };
 
     try {
@@ -114,105 +136,190 @@ const MedicineTimeSettingScreen = () => {
   };
 
   return (
-    <Container style={{position: 'relative'}}>
-      <ScrollView>
-        {/* 시간 선택 */}
-        <View style={styles.pickerRow}>
-          <WheelPicker
-            options={baseAmPm}
-            selectedIndex={ampmIndex}
-            onChange={setAmPmIndex}
-            itemHeight={60}
-            itemTextStyle={styles.itemTextStyle}
-            selectedIndicatorStyle={styles.selectedIndicatorStyle}
-            visibleRest={1}
-            containerStyle={styles.containerStyle}
+    <Container style={{position: 'relative', paddingTop: 12}}>
+      <ScrollView
+        scrollEnabled={scrollEnabled}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
+        {/* 약물명 */}
+        <Text style={styles.label}>약물명</Text>
+        <Input
+          value={medicineName}
+          onChangeText={setMedicineName}
+          placeholder="약물명을 입력하세요"
+          style={[
+            styles.inputStyle,
+            {backgroundColor: 'white', borderColor: '#E5E7EB'},
+          ]}
+        />
+
+        {/* 복용량 */}
+        <Text style={[styles.label, {marginTop: 16}]}>복용량</Text>
+        <View style={styles.doseRow}>
+          <Input
+            value={dose}
+            onChangeText={setDose}
+            placeholder="1"
+            keyboardType="number-pad"
+            style={[styles.inputStyle, {width: 80, textAlign: 'center'}]}
           />
-          <WheelPicker
-            options={repeatedHours}
-            selectedIndex={hourIndex}
-            onChange={handleHourChange}
-            itemHeight={60}
-            itemTextStyle={styles.itemTextStyle}
-            selectedIndicatorStyle={styles.selectedIndicatorStyle}
-            visibleRest={1}
-            containerStyle={styles.containerStyle}
-          />
-          <WheelPicker
-            options={repeatedMinutes}
-            selectedIndex={minuteIndex}
-            onChange={handleMinuteChange}
-            itemHeight={60}
-            itemTextStyle={styles.itemTextStyle}
-            selectedIndicatorStyle={styles.selectedIndicatorStyle}
-            visibleRest={1}
-            containerStyle={styles.containerStyle}
-          />
+          <Text style={{marginLeft: 8, color: '#475569'}}>정</Text>
         </View>
 
-        {/* 약 추가 인풋 */}
-        <View style={{marginTop: 40}}>
-          <Input
-            value={medicineName}
-            onChangeText={setMedicineName}
-            placeholder="복용할 약 이름을 입력해주세요"
-            style={styles.inputStyle}
-          />
-          <Input
-            value={memo}
-            onChangeText={setMemo}
-            placeholder="메모 (예: 식후 30분)"
-            style={styles.inputStyle}
-          />
-          <CommonButton onPress={medicineAddHandler}>약 추가</CommonButton>
+        {/* 복용 시간 */}
+        <Text style={[styles.label, {marginTop: 16}]}>복용 시간</Text>
+        <View style={styles.segmentWrap}>
+          {AMPM.map((t, idx) => (
+            <Pressable
+              key={t}
+              onPress={() => setAmPmIndex(idx)}
+              style={[
+                styles.segment,
+                ampmIndex === idx && styles.segmentActive,
+              ]}>
+              <Text
+                style={[
+                  styles.segmentText,
+                  ampmIndex === idx && styles.segmentTextActive,
+                ]}>
+                {t}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <View style={styles.timePickerCard}>
+          <View style={styles.pickerRow}>
+            <View
+              style={styles.wheelWrap}
+              onTouchStart={beginWheel}
+              onTouchEnd={endWheel}
+              onTouchCancel={endWheel}>
+              <WheelPicker
+                options={repeatedHours}
+                selectedIndex={hourIndex}
+                onChange={handleHourChange}
+                itemHeight={60}
+                itemTextStyle={styles.itemTextStyle}
+                selectedIndicatorStyle={styles.selectedIndicatorStyle}
+                visibleRest={1}
+                containerStyle={styles.containerStyle}
+              />
+            </View>
+            <View
+              style={styles.wheelWrap}
+              onTouchStart={beginWheel}
+              onTouchEnd={endWheel}
+              onTouchCancel={endWheel}>
+              <WheelPicker
+                options={repeatedMinutes}
+                selectedIndex={minuteIndex}
+                onChange={handleMinuteChange}
+                itemHeight={60}
+                itemTextStyle={styles.itemTextStyle}
+                selectedIndicatorStyle={styles.selectedIndicatorStyle}
+                visibleRest={1}
+                containerStyle={styles.containerStyle}
+              />
+            </View>
+          </View>
         </View>
 
-        {/* 추가된 약 리스트 */}
-        <View style={{marginTop: 8}}>
-          {medicineArray.map((item, index) => {
+        {/* 복용 방법 */}
+        <Text style={[styles.label, {marginTop: 16}]}>복용 방법</Text>
+        <View style={{gap: 10}}>
+          {(
+            ['식전 30분', '식후 30분', '식사와 함께', '시간 관계없이'] as const
+          ).map(opt => {
+            const active = method === opt;
             return (
-              <View
-                key={index}
-                style={{
-                  borderRadius: layout.BORDER_RADIUS,
-                  borderWidth: 1,
-                  borderColor: 'gray',
-                  width: '100%',
-                  padding: 10,
-                  marginVertical: 8,
-                }}>
-                <Text style={{fontSize: layout.FONT_SIZE, fontWeight: 'bold'}}>
-                  {item.name}
+              <Pressable
+                key={opt}
+                onPress={() => setMethod(opt)}
+                style={[styles.methodItem, active && styles.methodItemActive]}>
+                <View
+                  style={[styles.radio, active && styles.radioActiveBorder]}>
+                  {active && <View style={styles.radioDot} />}
+                </View>
+                <Text
+                  style={[
+                    styles.methodText,
+                    active && styles.methodTextActive,
+                  ]}>
+                  {opt}
                 </Text>
-                {item.memo ? (
-                  <Text style={{fontSize: layout.FONT_SIZE, color: 'gray'}}>
-                    {item.memo}
-                  </Text>
-                ) : null}
-              </View>
+              </Pressable>
             );
           })}
         </View>
-      </ScrollView>
 
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 50,
-          width: '100%',
-          left: layout.HORIZONTAL_VALUE,
-        }}>
-        <CommonButton onPress={handleSave}>일정 저장</CommonButton>
-      </View>
+        {/* 추가된 약 리스트 */}
+        {medicineArray.length > 0 && (
+          <View style={{marginTop: 16}}>
+            {medicineArray.map((item, index) => (
+              <View key={index} style={styles.previewCard}>
+                <Text style={{fontWeight: '700'}}>{item.name}</Text>
+                <Text style={{color: '#64748B', marginTop: 2}}>
+                  {item.memo}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={{marginVertical: 16}}>
+          <CommonButton onPress={handleSave}>
+            복약 일정 추가하기
+          </CommonButton>
+        </View>
+      </ScrollView>
     </Container>
   );
 };
 
 const styles = StyleSheet.create({
+  label: {
+    fontSize: 16,
+    color: '#111827',
+    marginBottom: 8,
+    fontWeight: '700',
+  },
+  doseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  segmentWrap: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+    width: '100%',
+  },
+  segment: {
+    flex: 1,
+    height: 48,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentActive: {
+    backgroundColor: '#3B82F6',
+  },
+  segmentText: {color: '#334155', fontWeight: '600'},
+  segmentTextActive: {color: 'white'},
+  timePickerCard: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
   pickerRow: {
     flexDirection: 'row',
-    gap: 20,
-    justifyContent: 'center',
+    justifyContent: 'space-around',
+    height: 190,
+  },
+  wheelWrap: {
+    flex: 1,
   },
   itemTextStyle: {
     fontSize: 32,
@@ -231,6 +338,56 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 8, // 인풋 간 간격
+  },
+  methodItem: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  methodItemActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EEF2FF',
+  },
+  methodText: {color: '#334155', fontSize: 14},
+  methodTextActive: {color: '#1D4ED8', fontWeight: '700'},
+  radio: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    backgroundColor: 'white',
+  },
+  radioActiveBorder: {
+    borderColor: '#3B82F6',
+  },
+  radioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3B82F6',
+    alignSelf: 'center',
+    marginTop: 3,
+  },
+  previewCard: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: 'white',
+    marginBottom: 10,
+  },
+  bottomAction: {
+    position: 'absolute',
+    bottom: 50,
+    left: layout.HORIZONTAL_VALUE,
+    width: '100%',
+    right: layout.HORIZONTAL_VALUE,
   },
 });
 
