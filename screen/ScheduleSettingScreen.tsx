@@ -9,7 +9,6 @@ import {
   Platform,
   Pressable,
 } from 'react-native';
-import WheelPicker from 'react-native-wheely';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -20,6 +19,7 @@ import layout from '../constants/layout';
 import Container from '../layouts/Container';
 import {useSeniorStore} from '../store/senior.store';
 import {useActivityScheduleStore} from '../store/activitySchedule.store';
+import TimeWheelPicker from '../components/common/TimeWheelPicker';
 
 // --- WheelPicker 설정 ---
 const LOOP_COUNT = 50;
@@ -108,8 +108,6 @@ const ScheduleSettingScreen = () => {
     const startTime = new Date(date);
     startTime.setHours(hour);
     startTime.setMinutes(minute);
-
-    console.log('startTime:', startTime.toISOString());
     
     const payload = {
       seniorId,
@@ -156,40 +154,18 @@ const ScheduleSettingScreen = () => {
           )}
 
           <Text style={styles.label}>시간</Text>
-          <View
-            style={styles.pickerRow}
-            onStartShouldSetResponder={() => true}
-            onResponderGrant={() => setScrollEnabled(false)} // WheelPicker 터치 시작 → ScrollView 비활성화
-            onResponderRelease={() => setScrollEnabled(true)} // 손 뗄 때 다시 활성화
-          >
-            <WheelPicker
-              options={baseAmPm}
-              selectedIndex={ampmIndex}
-              onChange={setAmPmIndex}
-              itemHeight={60}
-              itemTextStyle={styles.itemTextStyle}
-              selectedIndicatorStyle={styles.selectedIndicatorStyle}
-              containerStyle={styles.containerStyle}
-            />
-            <WheelPicker
-              options={repeatedHours}
-              selectedIndex={hourIndex}
-              onChange={handleHourChange}
-              itemHeight={60}
-              itemTextStyle={styles.itemTextStyle}
-              selectedIndicatorStyle={styles.selectedIndicatorStyle}
-              containerStyle={styles.containerStyle}
-            />
-            <WheelPicker
-              options={repeatedMinutes}
-              selectedIndex={minuteIndex}
-              onChange={handleMinuteChange}
-              itemHeight={60}
-              itemTextStyle={styles.itemTextStyle}
-              selectedIndicatorStyle={styles.selectedIndicatorStyle}
-              containerStyle={styles.containerStyle}
-            />
-          </View>
+          <TimeWheelPicker
+            ampmIndex={ampmIndex}
+            setAmPmIndex={setAmPmIndex}
+            hourIndex={hourIndex}
+            setHourIndex={setHourIndex}
+            minuteIndex={minuteIndex}
+            setMinuteIndex={setMinuteIndex}
+            repeatedHours={repeatedHours}
+            repeatedMinutes={repeatedMinutes}
+            onBeginInteraction={() => setScrollEnabled(false)}
+            onEndInteraction={() => setScrollEnabled(true)}
+          />
 
           <Text style={styles.label}>일정 제목</Text>
           <Input

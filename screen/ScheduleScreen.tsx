@@ -21,12 +21,42 @@ import {deleteActivitySchedule} from '../api/activity'; // API 함수 임포트
 // react-native-calendars 한글 설정 (이미 다른 곳에 있다면 중복)
 LocaleConfig.locales['ko'] = {
   monthNames: [
-    '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월',
+    '1월',
+    '2월',
+    '3월',
+    '4월',
+    '5월',
+    '6월',
+    '7월',
+    '8월',
+    '9월',
+    '10월',
+    '11월',
+    '12월',
   ],
   monthNamesShort: [
-    '1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월',
+    '1월',
+    '2월',
+    '3월',
+    '4월',
+    '5월',
+    '6월',
+    '7월',
+    '8월',
+    '9월',
+    '10월',
+    '11월',
+    '12월',
   ],
-  dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
+  dayNames: [
+    '일요일',
+    '월요일',
+    '화요일',
+    '수요일',
+    '목요일',
+    '금요일',
+    '토요일',
+  ],
   dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
   today: '오늘',
 };
@@ -35,15 +65,17 @@ LocaleConfig.defaultLocale = 'ko';
 const ScheduleScreen = () => {
   const navigation = useNavigation();
   const {seniors} = useSeniorStore();
-  const {
-    markedDates,
-    schedulesByDate,
-    isLoading,
-    error,
-    fetchSchedules,
-  } = useActivityScheduleStore();
+  const {markedDates, schedulesByDate, isLoading, error, fetchSchedules} =
+    useActivityScheduleStore();
 
-  const [selectedDate, setSelectedDate] = useState('');
+  const toYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const [selectedDate, setSelectedDate] = useState<string>(toYMD(new Date()));
 
   useEffect(() => {
     if (seniors.length > 0) {
@@ -93,19 +125,38 @@ const ScheduleScreen = () => {
     <Container>
       <ScrollView>
         <Calendar
-          markedDates={{
-            ...markedDates,
-            [selectedDate]: {
-              ...markedDates[selectedDate],
-              selected: true,
-              selectedColor: COLOR.DEFAULT_COLOR,
-            },
-          }}
           onDayPress={onDayPress}
           monthFormat={'yyyy년 MM월'}
           theme={{
             arrowColor: COLOR.DEFAULT_COLOR,
             todayTextColor: COLOR.DEFAULT_COLOR,
+          }}
+          dayComponent={({date, state}: any) => {
+            const ymd = date?.dateString;
+            const isSelected = selectedDate === ymd;
+            const hasSchedule = !!schedulesByDate[ymd];
+            const disabled = state === 'disabled';
+
+            return (
+              <Pressable
+                onPress={() => onDayPress(date)}
+                style={styles.dayCell}>
+                {isSelected ? (
+                  <View style={styles.selectedBox}>
+                    <Text style={styles.selectedText}>{date.day}</Text>
+                    {hasSchedule && <View style={styles.whiteDot} />}
+                  </View>
+                ) : (
+                  <>
+                    <Text
+                      style={[styles.dayText, disabled && {color: '#CBD5E1'}]}>
+                      {date.day}
+                    </Text>
+                    {hasSchedule && <View style={styles.greenDot} />}
+                  </>
+                )}
+              </Pressable>
+            );
           }}
         />
 
@@ -144,7 +195,9 @@ const ScheduleScreen = () => {
                 ))
               ) : (
                 <Text style={styles.noScheduleText}>
-                  {selectedDate ? '선택한 날짜에 일정이 없습니다.' : '날짜를 선택하여 일정을 확인하세요.'}
+                  {selectedDate
+                    ? '선택한 날짜에 일정이 없습니다.'
+                    : '날짜를 선택하여 일정을 확인하세요.'}
                 </Text>
               )}
             </>
@@ -181,6 +234,37 @@ const styles = StyleSheet.create({
   scheduleContainer: {
     marginTop: 10,
   },
+  // Calendar day styles (match Medicine calendar)
+  dayCell: {
+    alignItems: 'center',
+    height: 48,
+    paddingTop: 4,
+  },
+  selectedBox: {
+    width: 34,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingBottom: 6,
+  },
+  selectedText: {color: 'white', fontWeight: '700'},
+  whiteDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'white',
+    marginTop: 4,
+  },
+  dayText: {color: '#111827', fontWeight: '600'},
+  greenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginTop: 4,
+  },
   scheduleItem: {
     backgroundColor: 'white',
     borderRadius: layout.BORDER_RADIUS,
@@ -212,14 +296,15 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   deleteButton: {
-    backgroundColor: '#EF4444', // red-500
+    borderColor: '#EF4444', // red-500
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: layout.BORDER_RADIUS,
   },
   deleteButtonText: {
-    color: 'white',
     fontWeight: '600',
+    color: '#EF4444', // red-500
   },
 });
 
