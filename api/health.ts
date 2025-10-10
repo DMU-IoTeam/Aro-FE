@@ -19,7 +19,10 @@ export const getHealthQuestions = async (
   return response.data.map((q: any) => ({
     ...q,
     id: q.id.toString(), // Ensure ID is a string for consistency
-    options: q.options.split('/'),
+    options: (q.options || '')
+      .split(',')
+      .map((opt: string) => opt.trim())
+      .filter((opt: string) => opt.length > 0),
   }));
 };
 
@@ -45,7 +48,7 @@ export const postHealthQuestion = async (
 ) => {
   console.log('Posting health question with payload:', payload);
   const response = await apiClient.post(
-    `/api/seniors/${seniorId}/health-questions`,
+    `/api/health-questions`,
     payload,
   );
   return response.data;

@@ -175,7 +175,7 @@ const PhotoUploadScreen = () => {
               style={[styles.uploadCard, styles.addCard]}
               onPress={handleChoosePhoto}>
               <FontAwesomeIcon icon={faPlus} size={18} color="#64748B" />
-              <Text style={styles.addCardText}>새 질문 추가</Text>
+              <Text style={styles.addCardText}>문제 추가</Text>
             </Pressable>
           </View>
         )}

@@ -1,24 +1,35 @@
-import React from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
+  ActivityIndicator,
+  ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
   Pressable,
-  FlatList,
-  Alert,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {
+  useNavigation,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
-import CommonButton from '../components/common/CommonButton';
-import {useHealthCheckStore} from '../store/healthCheck.store';
 import layout from '../constants/layout';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {
+  faPen,
+  faEllipsisVertical,
+  faPlus,
+  faBell,
+  faCalendarWeek,
+  faGear,
+} from '@fortawesome/free-solid-svg-icons';
+import {useHealthCheckStore} from '../store/healthCheck.store';
 
-// Define navigation param types for type safety
+// Navigation types
 type RootStackParamList = {
   HealthCheckQuestion: {questionId?: string};
-  CalendarScreen: undefined; // Add CalendarScreen for navigation
-  // ... other screens
+  HealthCheckCalendarScreen: undefined;
 };
 
 type HealthCheckScreenNavigationProp = StackNavigationProp<
@@ -26,70 +37,150 @@ type HealthCheckScreenNavigationProp = StackNavigationProp<
   'HealthCheckQuestion'
 >;
 
+const toneStyles = {
+  strongGreen: {bg: '#E7F9ED', text: '#089471'},
+  lightBlue: {bg: '#E0F2FE', text: '#0369A1'},
+  amber: {bg: '#FFECE2', text: '#B45309'},
+  red: {bg: '#FDE7E7', text: '#EF4444'},
+  blue: {bg: '#E9F2FF', text: '#2563EB'},
+  yellow: {bg: '#FFF6E4', text: '#F59E0B'},
+  neutral: {bg: '#EEF1F6', text: '#64748B'},
+} as const;
+
+const mapOptionTone = (label: string) => {
+  const normalized = label.replace(/\s+/g, '').toLowerCase();
+  if (normalized.includes('아주좋')) return toneStyles.strongGreen;
+  if (normalized.includes('좋')) return toneStyles.strongGreen;
+  if (normalized.includes('전혀') || normalized.includes('없')) return toneStyles.blue;
+  if (normalized.includes('조금')) return toneStyles.yellow;
+  if (normalized.includes('아주나쁨')) return toneStyles.red;
+  if (normalized.includes('나쁨')) return toneStyles.amber;
+  return toneStyles.neutral;
+};
+
 const HealthCheckScreen = () => {
   const navigation = useNavigation<HealthCheckScreenNavigationProp>();
-  const {questions, deleteQuestion} = useHealthCheckStore();
+  const {questions, isLoading, fetchQuestions} = useHealthCheckStore();
+  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>({});
 
-  const handleDelete = (id: string) => {
-    Alert.alert('질문 삭제', '정말로 이 질문을 삭제하시겠습니까?', [
-      {text: '취소', style: 'cancel'},
-      {text: '삭제', style: 'destructive', onPress: () => deleteQuestion(id)},
-    ]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchQuestions();
+    }, [fetchQuestions]),
+  );
+
+  useEffect(() => {
+    setEnabledMap(prev => {
+      const next: Record<string, boolean> = {};
+      questions.forEach(q => {
+        next[q.id] = prev[q.id] ?? true;
+      });
+      return next;
+    });
+  }, [questions]);
+
+  const chipsByQuestion = useMemo(
+    () =>
+      questions.map(q =>
+        q.options.map(opt => ({label: opt, style: mapOptionTone(opt)})),
+      ),
+    [questions],
+  );
+
+  const toggleQuestion = (id: string) => {
+    setEnabledMap(prev => ({...prev, [id]: !prev[id]}));
   };
 
   return (
-    <Container>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>건강 체크 질문 관리</Text>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <CommonButton
-          style={styles.halfButton}
-          onPress={() => navigation.navigate('HealthCheckQuestion')}>
-          + 질문 추가
-        </CommonButton>
-        <CommonButton
-          style={styles.halfButton}
-          onPress={() => navigation.navigate('HealthCheckCalendarScreen')}>
-          답변 확인
-        </CommonButton>
-      </View>
-
-      <FlatList
-        data={questions}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <Pressable
-            style={styles.questionItem}
-            onPress={() =>
-              navigation.navigate('HealthCheckQuestion', {questionId: item.id})
-            }>
-            <View style={styles.questionContent}>
-              <Text style={styles.questionItemText} numberOfLines={1}>
-                {item.text}
-              </Text>
-              <View style={styles.optionsPreviewContainer}>
-                {item.options.map(option => (
-                  <View key={option} style={styles.optionPreviewChip}>
-                    <Text style={styles.optionPreviewText}>{option}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <Pressable
-              style={styles.deleteButton}
-              onPress={() => handleDelete(item.id)}>
-              <Text style={styles.deleteButtonText}>삭제</Text>
-            </Pressable>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>질문을 추가해주세요.</Text>
+    <Container style={{paddingHorizontal: 0}}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        {isLoading && questions.length === 0 ? (
+          <View style={styles.loaderBox}>
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
-        }
-      />
+        ) : questions.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>등록된 질문이 없습니다.</Text>
+          </View>
+        ) : (
+          questions.map((item, idx) => {
+            const chips = chipsByQuestion[idx] || [];
+            const isEnabled = enabledMap[item.id] ?? true;
+            const visibleChips = chips.slice(0, 4);
+            const remain = chips.length - visibleChips.length;
+            console.log(item)
+            return (
+              <View key={item.id} style={styles.questionCard}>
+                <View style={styles.cardHeader}>
+                  <View
+                    style={[
+                      styles.orderBadge,
+                      item.optionType === 'custom' && styles.orderBadgeAlt,
+                    ]}>
+                    <Text style={styles.orderBadgeText}>{idx + 1}</Text>
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text style={styles.questionTitle}>{item.questionText}</Text>
+                  </View>
+                  <View style={styles.cardActions}>
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate('HealthCheckQuestion', {
+                          questionId: item.id,
+                        })
+                      }>
+                      <FontAwesomeIcon
+                        icon={faPen}
+                        size={16}
+                        color="#94A3B8"
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View style={styles.optionRow}>
+                  <Text style={styles.optionLabel}>응답 옵션</Text>
+                  <View style={styles.optionChipRow}>
+                    {visibleChips.map(opt => (
+                      <View
+                        key={opt.label}
+                        style={[styles.optionChip, {backgroundColor: opt.style.bg}]}
+                      >
+                        <Text
+                          style={[styles.optionChipText, {color: opt.style.text}]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </View>
+                    ))}
+                    {remain > 0 && (
+                      <View
+                        style={[styles.optionChip, {backgroundColor: toneStyles.neutral.bg}]}
+                      >
+                        <Text
+                          style={[styles.optionChipText, {color: toneStyles.neutral.text}]}
+                        >
+                          +{remain}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        <Pressable
+          style={styles.addCard}
+          onPress={() => navigation.navigate('HealthCheckQuestion')}>
+          <FontAwesomeIcon icon={faPlus} size={18} color="#64748B" />
+          <Text style={styles.addCardText}>새 질문 추가</Text>
+        </Pressable>
+
+      </ScrollView>
     </Container>
   );
 };
@@ -97,73 +188,136 @@ const HealthCheckScreen = () => {
 export default HealthCheckScreen;
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: 15,
+  scrollContent: {
+    padding: layout.HORIZONTAL_VALUE,
+    paddingBottom: 32,
+    gap: 16,
   },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  questionCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+    padding: 16,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 1,
+    gap: 12,
   },
-  buttonContainer: {
+  cardHeader: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  halfButton: {
-    flex: 1,
-  },
-  questionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  orderBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#6366F1',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: layout.BORDER_RADIUS,
+    justifyContent: 'center',
   },
-  questionContent: {
-    flex: 1,
+  orderBadgeAlt: {
+    backgroundColor: '#0EA5E9',
   },
-  questionItemText: {
+  orderBadgeText: {color: 'white', fontWeight: '700'},
+  questionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#111827',
+  },
+  subtitle: {
+    marginTop: 4,
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionRow: {
+    marginTop: 8,
+  },
+  optionLabel: {
+    fontSize: 12,
+    color: '#94A3B8',
     marginBottom: 8,
   },
-  optionsPreviewContainer: {
+  optionChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
   },
-  optionPreviewChip: {
-    backgroundColor: '#e0e0e0',
-    borderRadius: 10,
+  optionChip: {
+    borderRadius: 14,
     paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  optionPreviewText: {
-    fontSize: 12,
-    color: '#333',
-  },
-  deleteButton: {
-    paddingVertical: 5,
     paddingHorizontal: 10,
-    backgroundColor: '#ff3b30',
-    borderRadius: 5,
-    marginLeft: 15,
   },
-  deleteButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  optionChipText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  cardFooter: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 100,
+    gap: 8,
+  },
+  toggleLabel: {
+    fontSize: 12,
+    color: '#0F172A',
+  },
+  addCard: {
+    height: 110,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  addCardText: {color: '#475569', fontWeight: '700'},
+  settingsCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'white',
+    padding: 16,
+    gap: 16,
+  },
+  settingsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingsTitle: {fontSize: 16, fontWeight: '700', color: '#111827'},
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingLabel: {fontSize: 12, color: '#94A3B8'},
+  settingValue: {fontSize: 14, fontWeight: '600', color: '#111827'},
+  loaderBox: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyBox: {
+    paddingVertical: 40,
+    alignItems: 'center',
   },
   emptyText: {
-    fontSize: 16,
-    color: 'grey',
+    fontSize: 14,
+    color: '#94A3B8',
   },
 });

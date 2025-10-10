@@ -1,33 +1,39 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
+  ScrollView,
   StyleSheet,
   Text,
   View,
   Pressable,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import Container from '../layouts/Container';
-import CommonButton from '../components/common/CommonButton';
 import Input from '../components/common/Input';
 import {
   useHealthCheckStore,
   defaultOptions,
 } from '../store/healthCheck.store';
-import COLOR from '../constants/color';
 import layout from '../constants/layout';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faCircleCheck, faCirclePlus} from '@fortawesome/free-solid-svg-icons';
 
 // Define navigation param types
-type ParamList = {
+ type ParamList = {
   HealthCheckQuestion: {questionId?: string};
 };
 
-type HealthCheckQuestionRouteProp = RouteProp<
+ type HealthCheckQuestionRouteProp = RouteProp<
   ParamList,
   'HealthCheckQuestion'
 >;
+
+const baseChips = [
+  {label: '아주 좋음', bg: '#E7F8EF', text: '#047857'},
+  {label: '좋음', bg: '#E0F2FE', text: '#0369A1'},
+  {label: '나쁨', bg: '#FFE9D7', text: '#B45309'},
+  {label: '아주 나쁨', bg: '#FDE2E1', text: '#B91C1C'},
+];
 
 const HealthCheckQuestionScreen = () => {
   const navigation = useNavigation();
@@ -46,7 +52,7 @@ const HealthCheckQuestionScreen = () => {
     if (questionId) {
       const existingQuestion = questions.find(q => q.id === questionId);
       if (existingQuestion) {
-        setText(existingQuestion.text);
+        setText(existingQuestion.questionText);
         setOptionType(existingQuestion.optionType);
         setOptions(existingQuestion.options);
       }
@@ -55,7 +61,7 @@ const HealthCheckQuestionScreen = () => {
 
   const handleSave = async () => {
     if (text.trim() === '') {
-      Alert.alert('오류', '질문 내용을 입력해주세요.');
+      alert('질문 내용을 입력해주세요.');
       return;
     }
     setIsSaving(true);
@@ -69,7 +75,7 @@ const HealthCheckQuestionScreen = () => {
       navigation.goBack();
     } catch (error) {
       console.error('Failed to save question:', error);
-      Alert.alert('오류', '저장에 실패했습니다. 다시 시도해주세요.');
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsSaving(false);
     }
@@ -79,29 +85,15 @@ const HealthCheckQuestionScreen = () => {
     setOptionType(type);
     if (type === 'default') {
       setOptions([...defaultOptions]);
-    } else {
-      // If switching to custom from a pre-existing question, keep options
-      if (questionId) {
-        const existingQuestion = questions.find(q => q.id === questionId);
-        if (existingQuestion && existingQuestion.optionType === 'custom') {
-          setOptions(existingQuestion.options);
-        } else {
-          setOptions([]);
-        }
-      } else {
-        setOptions([]);
-      }
+    } else if (!questionId) {
+      setOptions([]);
     }
   };
 
   const addCustomOption = () => {
-    if (
-      customOptionInput.trim() === '' ||
-      options.includes(customOptionInput.trim())
-    ) {
-      return;
-    }
-    setOptions(prev => [...prev, customOptionInput.trim()]);
+    const trimmed = customOptionInput.trim();
+    if (!trimmed || options.includes(trimmed)) return;
+    setOptions(prev => [...prev, trimmed]);
     setCustomOptionInput('');
   };
 
@@ -110,94 +102,135 @@ const HealthCheckQuestionScreen = () => {
   };
 
   return (
-    <Container>
-      <ScrollView>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>질문</Text>
+    <Container style={{paddingHorizontal: 0}}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>질문 내용</Text>
+            <Text style={styles.requiredBadge}>필수</Text>
+          </View>
           <Input
-            placeholder="질문 내용을 입력하세요"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            placeholder="질문을 입력하세요..."
             value={text}
             onChangeText={setText}
+            style={styles.textarea}
           />
+          <Text style={styles.helperText}>
+            예시: 오늘 기분은 어땠나요? / 수면의 질은 어땠나요?
+          </Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>답변 유형</Text>
-          <View style={styles.radioContainer}>
-            <Pressable
-              style={[
-                styles.radioButton,
-                optionType === 'default' && styles.radioButtonActive,
-              ]}
-              onPress={() => handleSetOptionType('default')}>
-              <Text
-                style={[
-                  styles.radioButtonText,
-                  optionType === 'default' && styles.radioButtonTextActive,
-                ]}>
-                기본 옵션
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.radioButton,
-                optionType === 'custom' && styles.radioButtonActive,
-              ]}
-              onPress={() => handleSetOptionType('custom')}>
-              <Text
-                style={[
-                  styles.radioButtonText,
-                  optionType === 'custom' && styles.radioButtonTextActive,
-                ]}>
-                커스텀 옵션
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>답변 선택</Text>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>답변 미리보기</Text>
-          <View style={styles.optionsContainer}>
-            {options.map(option => (
-              <View key={option} style={styles.optionWrapper}>
-                <Pressable style={styles.optionButton}>
-                  <Text style={styles.optionButtonText}>{option}</Text>
-                </Pressable>
-                {optionType === 'custom' && (
-                  <Pressable
-                    style={styles.deleteButton}
-                    onPress={() => deleteOption(option)}>
-                    <Text style={styles.deleteButtonText}>X</Text>
-                  </Pressable>
-                )}
+          <Pressable
+            style={[
+              styles.typeOption,
+              optionType === 'default' && styles.typeOptionActive,
+            ]}
+            onPress={() => handleSetOptionType('default')}>
+            <View style={styles.typeRow}>
+              <View
+                style={[
+                  styles.radioOuter,
+                  optionType === 'default' && styles.radioOuterActive,
+                ]}>
+                {optionType === 'default' && <View style={styles.radioInner} />}
               </View>
-            ))}
-          </View>
+              <View style={{flex: 1}}>
+                <Text style={styles.typeTitle}>기본</Text>
+                <Text style={styles.typeSubtitle}>
+                  아주 좋음 / 좋음 / 나쁨 / 아주 나쁨
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.typeOption,
+              optionType === 'custom' && styles.typeOptionActive,
+            ]}
+            onPress={() => handleSetOptionType('custom')}>
+            <View style={styles.typeRow}>
+              <View
+                style={[
+                  styles.radioOuter,
+                  optionType === 'custom' && styles.radioOuterActive,
+                ]}>
+                {optionType === 'custom' && <View style={styles.radioInner} />}
+              </View>
+              <View style={{flex: 1}}>
+                <Text style={styles.typeTitle}>커스텀</Text>
+                <Text style={styles.typeSubtitle}>
+                  직접 답변을 만들어보세요
+                </Text>
+              </View>
+            </View>
+          </Pressable>
         </View>
 
-        {optionType === 'custom' && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>커스텀 답변 추가</Text>
-            <View style={styles.customOptionContainer}>
-              <Input
-                style={{flex: 1}}
-                placeholder="추가할 답변 입력"
-                value={customOptionInput}
-                onChangeText={setCustomOptionInput}
-              />
-              <CommonButton onPress={addCustomOption}>추가</CommonButton>
+        {optionType === 'default' && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>기본 옵션 미리보기</Text>
+            <View style={styles.previewBox}>
+              {baseChips.map(chip => (
+                <View
+                  key={chip.label}
+                  style={[styles.previewChip, {backgroundColor: chip.bg}]}>
+                  <Text style={[styles.previewChipText, {color: chip.text}]}>
+                    {chip.label}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
         )}
-      </ScrollView>
 
-      <View style={styles.saveButtonContainer}>
-        {isSaving ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <CommonButton onPress={handleSave}>저장</CommonButton>
+        {optionType === 'custom' && (
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>커스텀 응답</Text>
+            <View style={styles.customBox}>
+              <Input
+                placeholder="답변을 입력하세요"
+                value={customOptionInput}
+                onChangeText={setCustomOptionInput}
+                style={{flex: 1}}
+              />
+              <Pressable style={styles.addChipBtn} onPress={addCustomOption}>
+                <FontAwesomeIcon
+                  icon={faCirclePlus}
+                  size={16}
+                  color="#2563EB"
+                />
+              </Pressable>
+            </View>
+            <View style={styles.customChipRow}>
+              {options.map(option => (
+                <View key={option} style={styles.customChip}>
+                  <Text style={styles.customChipText}>{option}</Text>
+                  <Pressable onPress={() => deleteOption(option)}>
+                    <Text style={styles.customChipRemove}>×</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
-      </View>
+
+        <View style={styles.saveBox}>
+          {isSaving ? (
+            <ActivityIndicator size="large" />
+          ) : (
+            <Pressable style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>문제 저장</Text>
+            </Pressable>
+          )}
+        </View>
+      </ScrollView>
     </Container>
   );
 };
@@ -205,83 +238,154 @@ const HealthCheckQuestionScreen = () => {
 export default HealthCheckQuestionScreen;
 
 const styles = StyleSheet.create({
-  inputGroup: {
-    marginBottom: 25,
+  scrollContent: {
+    paddingBottom: 32,
+    gap: 16,
   },
-  label: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  radioButton: {
-    flex: 1,
-    paddingVertical: 12,
+  sectionCard: {
+    marginHorizontal: layout.HORIZONTAL_VALUE,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: layout.BORDER_RADIUS,
-    alignItems: 'center',
     backgroundColor: 'white',
+    padding: 16,
+    gap: 12,
   },
-  radioButtonActive: {
-    backgroundColor: COLOR.DEFAULT_COLOR,
-    borderColor: COLOR.DEFAULT_COLOR,
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  radioButtonText: {
+  sectionTitle: {
     fontSize: 16,
-    color: '#374151',
+    fontWeight: '700',
+    color: '#111827',
   },
-  radioButtonTextActive: {
-    color: 'white',
-    fontWeight: 'bold',
+  requiredBadge: {
+    color: '#F97316',
+    fontSize: 12,
+    fontWeight: '700',
   },
-  optionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    minHeight: 40, // Ensure container has height even when empty
-    padding: 10,
+  textarea: {
+    height: 120,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: layout.BORDER_RADIUS,
-    backgroundColor: '#f9f9f9',
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
   },
-  optionWrapper: {
+  helperText: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  typeOption: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    padding: 14,
+  },
+  typeOptionActive: {
+    borderColor: '#2563EB',
+    backgroundColor: '#EEF2FF',
+  },
+  typeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: COLOR.DEFAULT_COLOR,
-    borderRadius: layout.BORDER_RADIUS,
-    overflow: 'hidden',
+    gap: 12,
   },
-  optionButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  optionButtonText: {
-    color: COLOR.DEFAULT_COLOR,
-  },
-  deleteButton: {
-    paddingHorizontal: 8,
-    borderLeftWidth: 1,
-    borderLeftColor: COLOR.DEFAULT_COLOR,
-    alignSelf: 'stretch',
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteButtonText: {
-    color: COLOR.DEFAULT_COLOR,
-    fontWeight: 'bold',
+  radioOuterActive: {
+    borderColor: '#2563EB',
   },
-  customOptionContainer: {
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#2563EB',
+  },
+  typeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  typeSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  previewBox: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
     flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  saveButtonContainer: {
-    paddingVertical: 10,
+  previewChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+  },
+  previewChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  customBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addChipBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2563EB',
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  customChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 14,
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  customChipText: {color: '#0369A1', fontWeight: '600'},
+  customChipRemove: {color: '#0369A1', fontWeight: '700', fontSize: 12},
+  saveBox: {
+    marginHorizontal: layout.HORIZONTAL_VALUE,
+    marginTop: 8,
+  },
+  saveButton: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: '700',
   },
 });
+
+export default HealthCheckQuestionScreen;

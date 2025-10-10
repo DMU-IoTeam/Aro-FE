@@ -10,7 +10,7 @@ import {useSeniorStore} from './senior.store';
 
 export interface HealthQuestion {
   id: string;
-  text: string;
+  questionText: string;
   optionType: 'default' | 'custom';
   options: string[];
 }
@@ -52,7 +52,7 @@ export const useHealthCheckStore = create<HealthCheckState>((set, get) => ({
 
     const payload: HealthQuestionPayload = {
       questionText: question.text,
-      options: question.options.join('/'),
+      options: question.options.join(','),
     };
     await postHealthQuestion(seniorId, payload);
     await get().fetchQuestions(); // Refresh list
@@ -61,7 +61,7 @@ export const useHealthCheckStore = create<HealthCheckState>((set, get) => ({
   updateQuestion: async question => {
     const payload: HealthQuestionPayload = {
       questionText: question.text,
-      options: question.options.join('/'),
+      options: question.options.join(','),
     };
     await updateHealthQuestion(question.id, payload);
     await get().fetchQuestions(); // Refresh list
