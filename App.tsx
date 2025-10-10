@@ -1,4 +1,5 @@
 import React from 'react';
+import './configs/globalListIndicators'; // global: hide scroll indicators
 import {
   NavigationContainer,
   useNavigationContainerRef,
