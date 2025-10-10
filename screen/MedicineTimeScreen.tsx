@@ -17,7 +17,8 @@ import Container from '../layouts/Container';
 import layout from '../constants/layout';
 import {MedicationItem} from '../store/medicationSchedule.store';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {faPills, faPlus} from '@fortawesome/free-solid-svg-icons';
+import {faCalendarDays} from '@fortawesome/free-regular-svg-icons';
 
 const MedicineTimeScreen = () => {
   const navigation = useNavigation();
@@ -114,13 +115,15 @@ const MedicineTimeScreen = () => {
         <View style={styles.weekRow}>
           {week.map(({key, label, date, full}) => {
             const isToday = new Date().toDateString() === full.toDateString();
-            const isSelected = selectedDate.toDateString() === full.toDateString();
+            const isSelected =
+              selectedDate.toDateString() === full.toDateString();
             return (
               <Pressable
                 key={key}
                 style={styles.weekCell}
                 onPress={() => setSelectedDate(full)}>
-                <Text style={[styles.weekLabel, isSelected && {color: '#111827'}]}>
+                <Text
+                  style={[styles.weekLabel, isSelected && {color: '#111827'}]}>
                   {label}
                 </Text>
                 <View
@@ -142,9 +145,10 @@ const MedicineTimeScreen = () => {
           })}
         </View>
         <Pressable
-          onPress={() => navigation.navigate('MedicineTimeSettingScreen')}
+          onPress={() => navigation.navigate('CalendarScreen')}
+          style={styles.calendarBtn}
           hitSlop={10}>
-          <FontAwesomeIcon icon={faBars} size={18} color="#64748B" />
+          <FontAwesomeIcon icon={faCalendarDays} size={18} color="#64748B" />
         </Pressable>
       </View>
 
@@ -195,18 +199,18 @@ export const MedicineScheduleItem = ({
   return (
     <View style={styles.itemContainer}>
       {/* 시간 라벨 */}
-      <Text style={styles.timeLabel}>{isAm ? '오전' : '오후'} ({time})</Text>
+      <Text style={styles.timeLabel}>
+        {isAm ? '오전' : '오후'} ({time})
+      </Text>
 
       {/* 약 목록 */}
       <View style={{gap: 10}}>
         {medicine.map(item => {
           return (
             <View style={styles.medicineCard} key={item.id}>
-              <Image
-                source={require('../assets/medicine.png')}
-                style={styles.medIcon}
-                resizeMode="contain"
-              />
+              <View style={styles.medIconCircle}>
+                <FontAwesomeIcon icon={faPills} size={18} color="#FFFFFF" />
+              </View>
               <View style={{flex: 1}}>
                 <Text style={styles.medName}>{item.name}</Text>
                 <Text style={styles.medMeta}>{item.memo || '메모 없음'}</Text>
@@ -215,7 +219,9 @@ export const MedicineScheduleItem = ({
                 <Pressable
                   style={[styles.actionBtn, styles.actionBtnDelete]}
                   onPress={() => onDelete(scheduleId)}>
-                  <Text style={[styles.actionText, styles.actionTextDelete]}>삭제</Text>
+                  <Text style={[styles.actionText, styles.actionTextDelete]}>
+                    삭제
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -247,6 +253,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flex: 1,
     marginRight: 12,
+  },
+  medIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calendarBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
   },
   weekCell: {
     width: `${100 / 7}%`,
