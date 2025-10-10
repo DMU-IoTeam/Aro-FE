@@ -15,6 +15,11 @@ import Container from '../layouts/Container';
 import COLOR from '../constants/color';
 import layout from '../constants/layout';
 import {useSeniors} from '../hooks/useSeniors';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {
+  faCalendarDays,
+} from '@fortawesome/free-regular-svg-icons';
+import {faPills, faHeartPulse, faPuzzlePiece} from '@fortawesome/free-solid-svg-icons';
 
 const MainScreen = () => {
   const navigation = useNavigation();
@@ -24,12 +29,44 @@ const MainScreen = () => {
     navigation.navigate(screen);
   };
 
-  const navigationItem = [
-    {color: '#309898', text: '복약 설정', screenName: 'MedicineTimeScreen'},
-    {color: '#F4631E', text: '외부 일정', screenName: 'ScheduleScreen'},
-    {color: '#FF9F00', text: '건강 체크', screenName: 'HealthCheckScreen'},
-    {color: '#8A2BE2', text: '사진 업로드', screenName: 'PhotoUploadScreen'},
-  ];
+  const featureCards = [
+    {
+      key: 'medicine',
+      title: '복약 확인 · 설정',
+      subtitle: '복약 확인 및 시간 설정',
+      screen: 'MedicineTimeScreen',
+      icon: faPills,
+      accent: '#EF4444',
+      bg: '#FEE2E2',
+    },
+    {
+      key: 'schedule',
+      title: '외부 일정 설정',
+      subtitle: '병원·모임 등 일정 관리',
+      screen: 'ScheduleScreen',
+      icon: faCalendarDays,
+      accent: '#3B82F6',
+      bg: '#DBEAFE',
+    },
+    {
+      key: 'health',
+      title: '건강 체크',
+      subtitle: '질문 작성 · 답변 확인',
+      screen: 'HealthCheckScreen',
+      icon: faHeartPulse,
+      accent: '#F59E0B',
+      bg: '#FEF3C7',
+    },
+    {
+      key: 'game',
+      title: '게임 사진 업로드',
+      subtitle: '피보호자 게임 사진 등록',
+      screen: 'PhotoUploadScreen',
+      icon: faPuzzlePiece,
+      accent: '#6366F1',
+      bg: '#E0E7FF',
+    },
+  ] as const;
 
   if (isLoading) {
     return (
@@ -47,73 +84,51 @@ const MainScreen = () => {
   //   );
   // }
 
+  const hasSenior = seniors.length > 0;
+
   return (
     <Container>
-      {/* 프로필 - 첫 번째 노인 정보 표시 */}
-      {seniors.length > 0 ? (
-        <Pressable
-          style={styles.profileContainer}
-          onPress={() => {
-            navigateHandler('ClientageProfileScreen');
-          }}>
+      {/* 보호자 요약 카드 */}
+      <Pressable
+        style={styles.summaryCard}
+        onPress={() => navigateHandler('ClientageProfileScreen')}>
+        <View style={styles.summaryAvatar}>
           <Image
-            style={styles.profileImage}
-            source={require('../assets/senior-female.jpg')} // 이미지는 일단 그대로 둡니다.
+            source={require('../assets/senior-female.jpg')}
+            style={{width: 80, height: 80, borderRadius: 9999, overflow: 'hidden'}}
+            resizeMode="cover"
           />
-          <View style={{justifyContent: 'space-between'}}>
-            <Text style={styles.profileText}>{seniors[0].name}님</Text>
-            <Text style={styles.profileText}>
-              {calculateAge(seniors[0].birthDate)}세
-            </Text>
-            {/* 병력 정보는 API에 추가되면 표시할 수 있습니다. */}
-            <Text style={styles.profileText}>
-              병력: {seniors[0].medicalHistory}
-            </Text>
+        </View>
+        <View style={{flex: 1, gap: 8}}>
+          <Text style={styles.summaryName}>
+            {hasSenior ? `${seniors[0].name} (${calculateAge(seniors[0].birthDate)}세)` : '피보호자를 등록하세요'}
+          </Text>
+          <Text style={styles.summaryMeta}>마지막 확인: 2시간 전</Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4}}>
+            <View style={styles.greenDot} />
+            <Text style={styles.summarySafe}>안전</Text>
           </View>
-        </Pressable>
-      ) : (
-        <Pressable
-          style={styles.beforeProfileContainer}
-          onPress={() => {
-            navigateHandler('ClientageProfileScreen');
-          }}>
-          <Image
-            style={styles.profileImage}
-            source={require('../assets/profile.png')} // 이미지는 일단 그대로 둡니다.
-          />
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-            <Image
-              source={require('../assets/plus.png')} // 이미지는 일단 그대로 둡니다.
-            />
-            <Text style={styles.beforeProfileText}>피보호자 등록하기</Text>
-          </View>
-        </Pressable>
-      )}
+        </View>
+      </Pressable>
 
-      {/* 네비게이션 버튼 */}
-      <View style={styles.navContainer}>
-        {navigationItem.map((value, index) => (
+      {/* 주요 기능 */}
+      <Text style={styles.sectionTitle}>주요 기능</Text>
+      <View style={styles.cardGrid}>
+        {featureCards.map(card => (
           <Pressable
-            style={[styles.navButton, {borderColor: value.color}]}
-            onPress={() => navigateHandler(value.screenName)}
-            key={index}>
-            <Text style={[styles.navText, {color: value.color}]}>
-              {value.text}
-            </Text>
+            key={card.key}
+            style={styles.featureCard}
+            onPress={() => navigateHandler(card.screen)}>
+            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+              <View style={[styles.iconWrap, {backgroundColor: card.bg}]}> 
+                <FontAwesomeIcon icon={card.icon} size={22} color={card.accent} />
+              </View>
+            </View>
+            <Text style={styles.featureTitle}>{card.title}</Text>
+            <Text style={styles.featureSubtitle}>{card.subtitle}</Text>
           </Pressable>
         ))}
       </View>
-      {/* 로봇 상태 */}
-      <Pressable
-        style={styles.robotStatusContainer}
-        onPress={() => navigateHandler('RobotConditionScreen')}>
-        <Text style={{color: 'white', fontWeight: '700'}}>
-          로봇 배터리: 88%
-        </Text>
-        <Text style={{color: 'white', fontWeight: '700'}}>
-          시리얼 넘버: q1w2e3r4t5
-        </Text>
-      </Pressable>
     </Container>
   );
 };
@@ -121,59 +136,113 @@ const MainScreen = () => {
 export default MainScreen;
 
 const styles = StyleSheet.create({
-  profileContainer: {
-    backgroundColor: COLOR.DEFAULT_COLOR,
-    padding: 18,
-    borderRadius: layout.BORDER_RADIUS,
+  summaryCard: {
     flexDirection: 'row',
-    gap: 14,
-  },
-  beforeProfileContainer: {
-    borderColor: COLOR.DEFAULT_COLOR,
+    alignItems: 'center',
+    gap: 32,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    padding: 18,
-    borderRadius: layout.BORDER_RADIUS,
-    flexDirection: 'row',
-    gap: 14,
+    borderColor: '#E5E7EB',
+    marginBottom: 16,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 9999,
-  },
-  profileText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  beforeProfileText: {
-    color: COLOR.DEFAULT_COLOR,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  navContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 15,
-  },
-  navButton: {
-    borderRadius: 10,
-    borderWidth: 1,
-    width: '48%',
-    marginBottom: 15,
-    height: 100,
-    aspectRatio: '1/1',
+  summaryAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 28,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  navText: {
+  summaryName: {
+    fontSize: 16,
     fontWeight: '700',
-    fontSize: 18,
+    color: '#111827',
   },
-  robotStatusContainer: {
-    borderRadius: 10,
-    padding: 8,
-    backgroundColor: COLOR.DEFAULT_COLOR,
+  summaryMeta: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  greenDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+    marginRight: 6,
+  },
+  summarySafe: {
+    fontSize: 13,
+    color: '#16A34A',
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  featureCard: {
+    width: '48%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
+    gap: 12,
+    justifyContent: 'center',
+  },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+    marginTop: 12,
+  },
+  featureSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 6,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  statChip: {
+    width: '32%',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    backgroundColor: 'white',
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  statSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
   },
 });
