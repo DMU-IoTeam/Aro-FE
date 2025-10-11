@@ -70,6 +70,7 @@ export const addActivitySchedule = async (
   payload: AddActivitySchedulePayload,
 ): Promise<void> => {
   try {
+    console.log('Adding activity schedule with payload:', payload);
     await apiClient.post('/api/schedules', payload);
   } catch (error) {
     console.error('Error adding activity schedule:', error);

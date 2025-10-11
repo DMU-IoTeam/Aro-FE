@@ -105,15 +105,22 @@ const ScheduleSettingScreen = () => {
     const minute = parseInt(repeatedMinutes[minuteIndex], 10);
 
     // ISO 8601 형식으로 변환
-    const startTime = new Date(date);
-    startTime.setHours(hour);
-    startTime.setMinutes(minute);
-    
+    const startTimeUtc = new Date(
+      Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        hour,
+        minute,
+        0,
+      ),
+    );
+
     const payload = {
       seniorId,
       title,
       memo,
-      startTime: startTime.toISOString(),
+      startTime: startTimeUtc.toISOString(),
     };
 
     try {
