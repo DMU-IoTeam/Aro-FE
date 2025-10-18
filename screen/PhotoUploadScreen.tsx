@@ -21,8 +21,11 @@ const PhotoUploadScreen = () => {
   const navigation = useNavigation();
   const [photoAssets, setPhotoAssets] = useState<Asset[]>([]);
   // 각 사진별 메타데이터
-  type PhotoMeta = {caption: string; distractorOptions: string};
-  const defaultMeta: PhotoMeta = {caption: '', distractorOptions: ''};
+  type PhotoMeta = {caption: string; distractorOptions: string[]};
+  const createDefaultMeta = (): PhotoMeta => ({
+    caption: '',
+    distractorOptions: ['', '', ''],
+  });
   const [quizByUri, setQuizByUri] = useState<Record<string, PhotoMeta>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +45,7 @@ const PhotoUploadScreen = () => {
             setQuizByUri(prev => {
               const next = {...prev};
               response.assets?.forEach(a => {
-                if (a.uri && !next[a.uri]) next[a.uri] = {...defaultMeta};
+                if (a.uri && !next[a.uri]) next[a.uri] = createDefaultMeta();
               });
               return next;
             });
@@ -66,14 +69,21 @@ const PhotoUploadScreen = () => {
 
   // per-photo meta helpers
   const updateMeta = (uri: string, updater: (m: PhotoMeta) => PhotoMeta) =>
-    setQuizByUri(prev => ({
-      ...prev,
-      [uri]: updater(prev[uri] || {...defaultMeta}),
-    }));
+    setQuizByUri(prev => {
+      const current = prev[uri] ?? createDefaultMeta();
+      return {
+        ...prev,
+        [uri]: updater(current),
+      };
+    });
   const setCaptionFor = (uri: string, text: string) =>
     updateMeta(uri, m => ({...m, caption: text}));
-  const setDistractorsFor = (uri: string, text: string) =>
-    updateMeta(uri, m => ({...m, distractorOptions: text}));
+  const setDistractorFor = (uri: string, index: number, text: string) =>
+    updateMeta(uri, m => {
+      const nextOptions = [...m.distractorOptions];
+      nextOptions[index] = text;
+      return {...m, distractorOptions: nextOptions};
+    });
 
   const handleUpload = async () => {
     if (photoAssets.length === 0) {
@@ -91,8 +101,8 @@ const PhotoUploadScreen = () => {
         Alert.alert('알림', '정답을 입력해주세요.');
         return;
       }
-      if (!meta.distractorOptions.trim()) {
-        Alert.alert('알림', '오답 후보를 입력해주세요.');
+      if (!meta.distractorOptions.every(opt => opt.trim())) {
+        Alert.alert('알림', '오답 후보를 모두 입력해주세요.');
         return;
       }
     }
@@ -109,7 +119,9 @@ const PhotoUploadScreen = () => {
           type: asset.type || 'image/jpeg',
           name: asset.fileName,
           caption: meta.caption,
-          distractorOptions: meta.distractorOptions,
+          distractorOptions: meta.distractorOptions
+            .map(opt => opt.trim())
+            .join(','),
         });
       });
       await Promise.all(uploadPromises);
@@ -142,8 +154,8 @@ const PhotoUploadScreen = () => {
           <View style={{gap: 16}}>
             {photoAssets.map(asset => {
               const meta = asset.uri
-                ? quizByUri[asset.uri] || defaultMeta
-                : defaultMeta;
+                ? quizByUri[asset.uri] || createDefaultMeta()
+                : createDefaultMeta();
               return (
                 <View key={asset.uri} style={styles.problemCard}>
                   <Image source={{uri: asset.uri}} style={styles.cardImage} />
@@ -160,15 +172,21 @@ const PhotoUploadScreen = () => {
                     value={meta.caption}
                     onChangeText={t => asset.uri && setCaptionFor(asset.uri, t)}
                   />
-                  <Text style={styles.inputLabel}>오답 후보</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="콤마로 구분하여 입력하세요 (예: 이모부,고모부,아들)"
-                    value={meta.distractorOptions}
-                    onChangeText={t =>
-                      asset.uri && setDistractorsFor(asset.uri, t)
-                    }
-                  />
+                  {meta.distractorOptions.map((option, index) => (
+                    <View key={index} style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>
+                        오답 후보 {index + 1}
+                      </Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="오답 후보를 입력하세요"
+                        value={option}
+                        onChangeText={text =>
+                          asset.uri && setDistractorFor(asset.uri, index, text)
+                        }
+                      />
+                    </View>
+                  ))}
                 </View>
               );
             })}
@@ -255,6 +273,9 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'white',
     marginBottom: 10,
+  },
+  inputGroup: {
+    marginBottom: 4,
   },
   inputLabel: {
     fontSize: 14,
