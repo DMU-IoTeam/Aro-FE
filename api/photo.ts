@@ -5,16 +5,19 @@ export interface UploadPhotoPayload {
   type: string;
   name: string;
   caption: string;
+  distractorOptions: string;
 }
 
 export const uploadPhoto = async (payload: UploadPhotoPayload): Promise<void> => {
   const formData = new FormData();
 
   formData.append('caption', payload.caption);
-console.log('Payload URI:', payload);
+  formData.append('distractorOptions', payload.distractorOptions);
+  console.log('Payload URI:', payload);
   // 파일 확장자에 따라 type 지정
   const fileType =
-    payload.uri.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    payload.type ||
+    (payload.uri.endsWith('.png') ? 'image/png' : 'image/jpeg');
 
   formData.append('image', {
     uri: payload.uri,

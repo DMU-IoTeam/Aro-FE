@@ -1,0 +1,19 @@
+0 verbose cli /Users/pc/.nvm/versions/node/v20.19.5/bin/node /Users/pc/.nvm/versions/node/v20.19.5/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.8.2
+2 info using node@v20.19.5
+3 silly config load:file:/Users/pc/.nvm/versions/node/v20.19.5/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/pc/programming/arofe/.npmrc
+5 silly config load:file:/Users/pc/.npmrc
+6 silly config load:file:/Users/pc/.nvm/versions/node/v20.19.5/etc/npmrc
+7 verbose title npm exec tsc --noEmit
+8 verbose argv "exec" "--" "tsc" "--noEmit"
+9 verbose logfile logs-max:10 dir:/Users/pc/programming/arofe/.npm-cache/_logs/2025-10-16T11_03_41_063Z-
+10 verbose logfile /Users/pc/programming/arofe/.npm-cache/_logs/2025-10-16T11_03_41_063Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+13 verbose cwd /Users/pc/programming/arofe
+14 verbose os Darwin 24.6.0
+15 verbose node v20.19.5
+16 verbose npm  v10.8.2
+17 verbose exit 2
+18 verbose code 2

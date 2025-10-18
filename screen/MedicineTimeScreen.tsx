@@ -175,6 +175,11 @@ const MedicineTimeScreen = () => {
           />
         )}
         keyExtractor={item => item.id.toString()}
+        ListEmptyComponent={
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>복약 일정이 존재하지 않습니다.</Text>
+          </View>
+        }
       />
     </Container>
   );
@@ -389,6 +394,14 @@ const styles = StyleSheet.create({
   },
   actionTextDelete: {
     color: '#EF4444',
+  },
+  emptyBox: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#94A3B8',
   },
 });
 

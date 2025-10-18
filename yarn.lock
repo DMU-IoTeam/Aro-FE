@@ -6460,6 +6460,11 @@ react-native-swipe-gestures@^1.0.5:
   resolved "https://registry.yarnpkg.com/react-native-swipe-gestures/-/react-native-swipe-gestures-1.0.5.tgz#a172cb0f3e7478ccd681fd36b8bfbcdd098bde7c"
   integrity sha512-Ns7Bn9H/Tyw278+5SQx9oAblDZ7JixyzeOczcBK8dipQk2pD7Djkcfnf1nB/8RErAmMLL9iXgW0QHqiII8AhKw==
 
+react-native-video@^6.17.0:
+  version "6.17.0"
+  resolved "https://registry.yarnpkg.com/react-native-video/-/react-native-video-6.17.0.tgz#36e91627550d4957faa38f88ee5b647aa122c7eb"
+  integrity sha512-sslmQo5paSNLmSJ93t3lkC7kl4yFGIc+LWoBdu44hkL4EKG7OIZNd5iaX+/SedAdqecifJrOZHAozxHzVh3TsQ==
+
 react-native-webview@^13.16.0:
   version "13.16.0"
   resolved "https://registry.yarnpkg.com/react-native-webview/-/react-native-webview-13.16.0.tgz#c995148f944a7eaf12389f0e6d5c6f5e6a775686"

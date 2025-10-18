@@ -20,10 +20,10 @@ import {faPlus, faXmark} from '@fortawesome/free-solid-svg-icons';
 const PhotoUploadScreen = () => {
   const navigation = useNavigation();
   const [photoAssets, setPhotoAssets] = useState<Asset[]>([]);
-  // 각 사진별 퀴즈 메타데이터
-  type QuizMeta = {question: string; answer: string};
-  const defaultMeta: QuizMeta = {question: '', answer: ''};
-  const [quizByUri, setQuizByUri] = useState<Record<string, QuizMeta>>({});
+  // 각 사진별 메타데이터
+  type PhotoMeta = {caption: string; distractorOptions: string};
+  const defaultMeta: PhotoMeta = {caption: '', distractorOptions: ''};
+  const [quizByUri, setQuizByUri] = useState<Record<string, PhotoMeta>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChoosePhoto = () => {
@@ -65,19 +65,19 @@ const PhotoUploadScreen = () => {
   };
 
   // per-photo meta helpers
-  const updateMeta = (uri: string, updater: (m: QuizMeta) => QuizMeta) =>
+  const updateMeta = (uri: string, updater: (m: PhotoMeta) => PhotoMeta) =>
     setQuizByUri(prev => ({
       ...prev,
       [uri]: updater(prev[uri] || {...defaultMeta}),
     }));
-  const setQuestionFor = (uri: string, text: string) =>
-    updateMeta(uri, m => ({...m, question: text}));
-  const setAnswerFor = (uri: string, text: string) =>
-    updateMeta(uri, m => ({...m, answer: text}));
+  const setCaptionFor = (uri: string, text: string) =>
+    updateMeta(uri, m => ({...m, caption: text}));
+  const setDistractorsFor = (uri: string, text: string) =>
+    updateMeta(uri, m => ({...m, distractorOptions: text}));
 
   const handleUpload = async () => {
     if (photoAssets.length === 0) {
-      Alert.alert('알림', '먼저 문제 이미지를 추가해주세요.');
+      Alert.alert('알림', '먼저 사진을 추가해주세요.');
       return;
     }
     // 검증: 각 사진별 메타 체크
@@ -87,12 +87,12 @@ const PhotoUploadScreen = () => {
         Alert.alert('알림', '일부 사진의 메타데이터가 없습니다.');
         return;
       }
-      if (!meta.question?.trim()) {
-        Alert.alert('알림', '질문을 입력해주세요.');
+      if (!meta.caption.trim()) {
+        Alert.alert('알림', '정답을 입력해주세요.');
         return;
       }
-      if (!meta.answer?.trim()) {
-        Alert.alert('알림', '정답을 입력해주세요.');
+      if (!meta.distractorOptions.trim()) {
+        Alert.alert('알림', '오답 후보를 입력해주세요.');
         return;
       }
     }
@@ -108,16 +108,17 @@ const PhotoUploadScreen = () => {
           uri: asset.uri,
           type: asset.type || 'image/jpeg',
           name: asset.fileName,
-          caption: JSON.stringify(meta),
+          caption: meta.caption,
+          distractorOptions: meta.distractorOptions,
         });
       });
       await Promise.all(uploadPromises);
-      Alert.alert('성공', '문제가 저장되었습니다.', [
+      Alert.alert('성공', '사진이 업로드되었습니다.', [
         {text: '확인', onPress: () => navigation.goBack()},
       ]);
     } catch (error) {
       console.error('Upload error:', error);
-      Alert.alert('오류', '문제 저장 중 오류가 발생했습니다.');
+      Alert.alert('오류', '사진 업로드 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -128,14 +129,14 @@ const PhotoUploadScreen = () => {
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}>
-        {/* 업로드 및 문제 카드 리스트 */}
-        <Text style={styles.sectionTitle}>문제 이미지</Text>
+        {/* 업로드 및 사진 카드 리스트 */}
+        <Text style={styles.sectionTitle}>사진 업로드</Text>
         {photoAssets.length === 0 ? (
           <Pressable
             style={[styles.uploadCard, styles.addCard]}
             onPress={handleChoosePhoto}>
             <FontAwesomeIcon icon={faPlus} size={18} color="#64748B" />
-            <Text style={styles.addCardText}>새 질문 추가</Text>
+            <Text style={styles.addCardText}>새 사진 추가</Text>
           </Pressable>
         ) : (
           <View style={{gap: 16}}>
@@ -151,21 +152,22 @@ const PhotoUploadScreen = () => {
                     onPress={() => handleRemovePhoto(asset.uri!)}>
                     <FontAwesomeIcon icon={faXmark} size={12} color="#FFFFFF" />
                   </Pressable>
-                  <Text style={styles.sectionTitle}>질문</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="이 사진에 나온 것은 무엇인가요?"
-                    value={meta.question}
-                    onChangeText={t =>
-                      asset.uri && setQuestionFor(asset.uri, t)
-                    }
-                  />
-                  <Text style={styles.sectionTitle}>정답</Text>
+
+                  <Text style={styles.inputLabel}>정답</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="정답을 입력하세요"
-                    value={meta.answer}
-                    onChangeText={t => asset.uri && setAnswerFor(asset.uri, t)}
+                    value={meta.caption}
+                    onChangeText={t => asset.uri && setCaptionFor(asset.uri, t)}
+                  />
+                  <Text style={styles.inputLabel}>오답 후보</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="콤마로 구분하여 입력하세요 (예: 이모부,고모부,아들)"
+                    value={meta.distractorOptions}
+                    onChangeText={t =>
+                      asset.uri && setDistractorsFor(asset.uri, t)
+                    }
                   />
                 </View>
               );
@@ -175,7 +177,7 @@ const PhotoUploadScreen = () => {
               style={[styles.uploadCard, styles.addCard]}
               onPress={handleChoosePhoto}>
               <FontAwesomeIcon icon={faPlus} size={18} color="#64748B" />
-              <Text style={styles.addCardText}>문제 추가</Text>
+              <Text style={styles.addCardText}>새 사진 추가</Text>
             </Pressable>
           </View>
         )}
@@ -191,7 +193,7 @@ const PhotoUploadScreen = () => {
             </View>
           ) : (
             <Pressable style={styles.primaryBtn} onPress={handleUpload}>
-              <Text style={{color: 'white', fontWeight: '700'}}>문제 저장</Text>
+              <Text style={{color: 'white', fontWeight: '700'}}>업로드</Text>
             </Pressable>
           )}
         </View>
@@ -228,7 +230,8 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 160,
+    height: 250,
+    resizeMode: 'cover',
     borderRadius: 10,
     backgroundColor: '#F1F5F9',
     marginBottom: 16,
@@ -252,6 +255,12 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'white',
     marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 6,
   },
   cardRemove: {
     position: 'absolute',

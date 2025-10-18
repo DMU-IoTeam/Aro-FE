@@ -13,7 +13,6 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Container from '../layouts/Container';
 import COLOR from '../constants/color';
-import layout from '../constants/layout';
 import {useSeniors} from '../hooks/useSeniors';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -51,7 +50,7 @@ const MainScreen = () => {
     {
       key: 'health',
       title: '건강 체크',
-      subtitle: '질문 작성 · 답변 확인',
+      subtitle: '질문 작성 및 답변 확인',
       screen: 'HealthCheckScreen',
       icon: faHeartPulse,
       accent: '#F59E0B',
@@ -85,6 +84,12 @@ const MainScreen = () => {
   // }
 
   const hasSenior = seniors.length > 0;
+  const primarySenior = hasSenior ? seniors[0] : null;
+  const profileImageSource =
+    hasSenior && primarySenior?.profileImage
+      ? require('../assets/senior-female.jpg')
+      : require('../assets/profile-fill2.png');
+  const showStatus = hasSenior;
 
   return (
     <Container>
@@ -94,20 +99,30 @@ const MainScreen = () => {
         onPress={() => navigateHandler('ClientageProfileScreen')}>
         <View style={styles.summaryAvatar}>
           <Image
-            source={require('../assets/senior-female.jpg')}
-            style={{width: 80, height: 80, borderRadius: 9999, overflow: 'hidden'}}
-            resizeMode="cover"
+            source={profileImageSource}
+            style={styles.summaryImage}
+            resizeMode={hasSenior && primarySenior?.profileImage ? 'cover' : 'contain'}
           />
         </View>
         <View style={{flex: 1, gap: 8}}>
           <Text style={styles.summaryName}>
-            {hasSenior ? `${seniors[0].name} (${calculateAge(seniors[0].birthDate)}세)` : '피보호자를 등록하세요'}
+            {hasSenior && primarySenior
+              ? `${primarySenior.name}${
+                  primarySenior.birthDate
+                    ? ` (${calculateAge(primarySenior.birthDate)}세)`
+                    : ''
+                }`
+              : '피보호자를 등록하세요'}
           </Text>
-          <Text style={styles.summaryMeta}>마지막 확인: 2시간 전</Text>
-          <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4}}>
-            <View style={styles.greenDot} />
-            <Text style={styles.summarySafe}>안전</Text>
-          </View>
+          {showStatus && (
+            <>
+              <Text style={styles.summaryMeta}>마지막 확인: 2시간 전</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4}}>
+                <View style={styles.greenDot} />
+                <Text style={styles.summarySafe}>안전</Text>
+              </View>
+            </>
+          )}
         </View>
       </Pressable>
 
@@ -154,6 +169,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  summaryImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
   },
   summaryName: {
     fontSize: 16,

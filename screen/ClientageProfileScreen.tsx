@@ -142,7 +142,7 @@ const ClientageProfileScreen = () => {
 
     const payload: RegisterSeniorPayload = {
       ...dataToSend,
-      profileImage: imageSource?.base64 || 'default',
+      profileImage: 'default',
     };
 
     try {

@@ -43,7 +43,8 @@ export const useFCM = (navigationRef: NavigationContainerRef<any> | null) => {
         },
       });
       if (navigationRef && navigationRef.isReady()) {
-        navigationRef.navigate('FallDetectionScreen');
+        const careEventId = remoteMessage.data?.careEventId;
+        navigationRef.navigate('FallDetectionScreen', careEventId ? {careEventId} : undefined);
       }
     });
 

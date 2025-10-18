@@ -12,10 +12,8 @@ import {WebView} from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
-const AUTH_URL =
-  Platform.OS === 'ios'
-    ? 'http://localhost:8080/oauth2/authorization/kakao'
-    : 'http://10.0.2.2:8080/oauth2/authorization/kakao';
+const AUTH_URL = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/kakao`;
+// const AUTH_URL = 'https://bd00a025d02d.ngrok-free.app/oauth2/authorization/kakao';
 
 const FINAL_REDIRECT_URI = 'http://localhost:3000/oauth2/redirect';
 

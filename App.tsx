@@ -66,7 +66,7 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
       <Stack.Screen
         name="FallDetectionScreen"
         component={FallDetectionScreen}
-        options={{title: '위험 감지'}}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="MedicineTimeScreen"
@@ -113,7 +113,8 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
         component={CalendarScreen}
         options={{title: '캘린더'}}
       />
-      <Stack.Screen name="PhotoUploadScreen" component={PhotoUploadScreen} />
+      <Stack.Screen name="PhotoUploadScreen" component={PhotoUploadScreen} 
+        options={{title: '게임 사진 업로드'}}/>
       <Stack.Screen
         name="HealthCheckQuestion"
         component={HealthCheckQuestionScreen}
