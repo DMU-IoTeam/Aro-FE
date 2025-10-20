@@ -8,7 +8,9 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
-  TextInput, // Use TextInput for individual captions
+  TextInput,
+  KeyboardAvoidingView,
+  Platform, // Use TextInput for individual captions
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {launchImageLibrary, Asset} from 'react-native-image-picker';
@@ -137,6 +139,11 @@ const PhotoUploadScreen = () => {
   };
 
   return (
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 90} // header 높이 등 조정
+    >
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}>
@@ -215,6 +222,7 @@ const PhotoUploadScreen = () => {
           )}
         </View>
       </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

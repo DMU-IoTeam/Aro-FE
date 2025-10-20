@@ -6,15 +6,14 @@ import {
   Text,
   View,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import Input from '../components/common/Input';
-import {
-  useHealthCheckStore,
-  defaultOptions,
-} from '../store/healthCheck.store';
+import {useHealthCheckStore, defaultOptions} from '../store/healthCheck.store';
 import layout from '../constants/layout';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -111,137 +110,147 @@ const HealthCheckQuestionScreen = () => {
   };
 
   return (
-    <Container style={{paddingHorizontal: 0}}>
-      
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>질문 내용</Text>
-            <Text style={styles.requiredBadge}>필수</Text>
-          </View>
-          <Input
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            placeholder="질문을 입력하세요..."
-            value={text}
-            onChangeText={setText}
-            style={styles.textarea}
-          />
-          <Text style={styles.helperText}>
-            예시: 오늘 기분은 어땠나요? / 수면의 질은 어땠나요?
-          </Text>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>답변 선택</Text>
-
-          <Pressable
-            style={[
-              styles.typeOption,
-              optionType === 'default' && styles.typeOptionActive,
-            ]}
-            onPress={() => handleSetOptionType('default')}>
-            <View style={styles.typeRow}>
-              <View
-                style={[
-                  styles.radioOuter,
-                  optionType === 'default' && styles.radioOuterActive,
-                ]}>
-                {optionType === 'default' && <View style={styles.radioInner} />}
-              </View>
-              <View style={{flex: 1}}>
-                <Text style={styles.typeTitle}>기본</Text>
-                <Text style={styles.typeSubtitle}>
-                  아주 좋음 / 좋음 / 나쁨 / 아주 나쁨
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.typeOption,
-              optionType === 'custom' && styles.typeOptionActive,
-            ]}
-            onPress={() => handleSetOptionType('custom')}>
-            <View style={styles.typeRow}>
-              <View
-                style={[
-                  styles.radioOuter,
-                  optionType === 'custom' && styles.radioOuterActive,
-                ]}>
-                {optionType === 'custom' && <View style={styles.radioInner} />}
-              </View>
-              <View style={{flex: 1}}>
-                <Text style={styles.typeTitle}>커스텀</Text>
-                <Text style={styles.typeSubtitle}>
-                  직접 답변을 만들어보세요
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </View>
-
-        {optionType === 'default' && (
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 60} // header 높이 등 조정
+    >
+      <Container style={{paddingHorizontal: 0}}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>기본 옵션 미리보기</Text>
-            <View style={styles.previewBox}>
-              {baseChips.map(chip => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>질문 내용</Text>
+              <Text style={styles.requiredBadge}>필수</Text>
+            </View>
+            <Input
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              placeholder="질문을 입력하세요..."
+              placeholderTextColor="#888"
+              value={text}
+              onChangeText={setText}
+              style={styles.textarea}
+            />
+            <Text style={styles.helperText}>
+              예시: 오늘 기분은 어땠나요? / 수면의 질은 어땠나요?
+            </Text>
+          </View>
+
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>답변 선택</Text>
+
+            <Pressable
+              style={[
+                styles.typeOption,
+                optionType === 'default' && styles.typeOptionActive,
+              ]}
+              onPress={() => handleSetOptionType('default')}>
+              <View style={styles.typeRow}>
                 <View
-                  key={chip.label}
-                  style={[styles.previewChip, {backgroundColor: chip.bg}]}>
-                  <Text style={[styles.previewChipText, {color: chip.text}]}>
-                    {chip.label}
+                  style={[
+                    styles.radioOuter,
+                    optionType === 'default' && styles.radioOuterActive,
+                  ]}>
+                  {optionType === 'default' && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <View style={{flex: 1}}>
+                  <Text style={styles.typeTitle}>기본</Text>
+                  <Text style={styles.typeSubtitle}>
+                    아주 좋음 / 좋음 / 나쁨 / 아주 나쁨
                   </Text>
                 </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {optionType === 'custom' && (
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>커스텀 응답</Text>
-            <View style={styles.customBox}>
-              <Input
-                placeholder="답변을 입력하세요"
-                value={customOptionInput}
-                onChangeText={setCustomOptionInput}
-                style={{flex: 1}}
-              />
-              <Pressable style={styles.addChipBtn} onPress={addCustomOption}>
-                <FontAwesomeIcon
-                  icon={faCirclePlus}
-                  size={16}
-                  color="#2563EB"
-                />
-              </Pressable>
-            </View>
-            <View style={styles.customChipRow}>
-              {options.map(option => (
-                <View key={option} style={styles.customChip}>
-                  <Text style={styles.customChipText}>{option}</Text>
-                  <Pressable onPress={() => deleteOption(option)}>
-                    <Text style={styles.customChipRemove}>×</Text>
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={styles.saveBox}>
-          {isSaving ? (
-            <ActivityIndicator size="large" />
-          ) : (
-            <Pressable style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>문제 저장</Text>
+              </View>
             </Pressable>
+
+            <Pressable
+              style={[
+                styles.typeOption,
+                optionType === 'custom' && styles.typeOptionActive,
+              ]}
+              onPress={() => handleSetOptionType('custom')}>
+              <View style={styles.typeRow}>
+                <View
+                  style={[
+                    styles.radioOuter,
+                    optionType === 'custom' && styles.radioOuterActive,
+                  ]}>
+                  {optionType === 'custom' && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <View style={{flex: 1}}>
+                  <Text style={styles.typeTitle}>커스텀</Text>
+                  <Text style={styles.typeSubtitle}>
+                    직접 답변을 만들어보세요
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          </View>
+
+          {optionType === 'default' && (
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>기본 옵션 미리보기</Text>
+              <View style={styles.previewBox}>
+                {baseChips.map(chip => (
+                  <View
+                    key={chip.label}
+                    style={[styles.previewChip, {backgroundColor: chip.bg}]}>
+                    <Text style={[styles.previewChipText, {color: chip.text}]}>
+                      {chip.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           )}
-        </View>
-      </ScrollView>
-    </Container>
+
+          {optionType === 'custom' && (
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>커스텀 응답</Text>
+              <View style={styles.customBox}>
+                <Input
+                  placeholder="답변을 입력하세요"
+                  value={customOptionInput}
+                  onChangeText={setCustomOptionInput}
+                  style={{flex: 1}}
+                />
+                <Pressable style={styles.addChipBtn} onPress={addCustomOption}>
+                  <FontAwesomeIcon
+                    icon={faCirclePlus}
+                    size={16}
+                    color="#2563EB"
+                  />
+                </Pressable>
+              </View>
+              <View style={styles.customChipRow}>
+                {options.map(option => (
+                  <View key={option} style={styles.customChip}>
+                    <Text style={styles.customChipText}>{option}</Text>
+                    <Pressable onPress={() => deleteOption(option)}>
+                      <Text style={styles.customChipRemove}>×</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.saveBox}>
+            {isSaving ? (
+              <ActivityIndicator size="large" />
+            ) : (
+              <Pressable style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>문제 저장</Text>
+              </Pressable>
+            )}
+          </View>
+        </ScrollView>
+      </Container>
+    </KeyboardAvoidingView>
   );
 };
 

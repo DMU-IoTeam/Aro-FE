@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   FlatList,
+  KeyboardAvoidingView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {
@@ -165,231 +166,252 @@ const ClientageProfileScreen = () => {
   };
 
   return (
-    <Container style={{paddingBottom: 50}}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View>
-          {/* 피보호자 프로필 요약 영역 */}
-          <View style={styles.profileCard}>
-            <Pressable onPress={selectImageHandler} style={styles.avatarContainer}>
-              {displayImageUri ? (
-                <Image source={require('../assets/senior-female.jpg')} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Image
-                    source={require('../assets/profile-fill.png')}
-                    style={{width: 24, height: 24, tintColor: '#64748B'}}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-            </Pressable>
-
-            <View style={{flex: 1}}>
-              <Text style={styles.nameText}>
-                {formData.name ? formData.name : '이름 미입력'}
-              </Text>
-              <View style={styles.subRow}>
-                <Text style={styles.subText}>
-                  {(() => {
-                    // 성별 표기 정규화
-                    const g = formData.gender;
-                    if (g === 'MALE' || g === '남성') return '남성';
-                    if (g === 'FEMALE' || g === '여성') return '여성';
-                    return '성별 미정';
-                  })()}
-                </Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.subText}>
-                  {typeof calcAge(formData.birthDate) === 'number'
-                    ? `${calcAge(formData.birthDate)}세`
-                    : '나이 미정'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.statusBadge}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>관리중</Text>
-            </View>
-          </View>
-
-          {/* 기본 정보 */}
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 20} // header 높이 등 조정
+    >
+      <Container style={{paddingBottom: 50}}>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View>
-            <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 20}}>
-              기본 정보
-            </Text>
-
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>이름 *</Text>
-              <Input
-                placeholder="이름을 입력하세요"
-                value={formData.name}
-                onChangeText={text => setFormData('name', text)}
-                style={{
-                  borderColor: '#E5E7EB',
-                  backgroundColor: 'white',
-                  height: 50,
-                  fontSize: 16,
-                }}
-              />
-            </View>
-
-            {/* 생년월일 DatePicker */}
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>생년월일 *</Text>
-              <Pressable onPress={() => setShowDatePicker(true)}>
-                <View style={[styles.dateInput, styles.dateRow]}>
-                  <Text style={styles.dateText}>
-                    {formData.birthDate
-                      ? formatKoreanDate(formData.birthDate)
-                      : '날짜를 선택하세요'}
-                  </Text>
-                  <FontAwesomeIcon icon={faCalendarDays} color="#94A3B8" size={18} />
-                </View>
-              </Pressable>
-            </View>
-
-            {showDatePicker && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={date}
-                mode={'date'}
-                onChange={onDateChange}
-              />
-            )}
-
-            {/* 성별 라디오 버튼 */}
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>성별 *</Text>
-              <View style={styles.radioContainer}>
-                <Pressable
-                  style={[
-                    styles.radioButton,
-                    formData.gender === 'MALE' && styles.radioButtonActive,
-                  ]}
-                  onPress={() => setFormData('gender', 'MALE')}>
-                  <View style={styles.radioButtonContent}>
-                    <View style={styles.radioDot}>
-                      {formData.gender === 'MALE' && (
-                        <View style={styles.radioDotInner} />
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.radioButtonText,
-                        formData.gender === 'MALE' &&
-                          styles.radioButtonTextActive,
-                      ]}>
-                      남성
-                    </Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.radioButton,
-                    formData.gender === 'FEMALE' && styles.radioButtonActive,
-                  ]}
-                  onPress={() => setFormData('gender', 'FEMALE')}>
-                  <View style={styles.radioButtonContent}>
-                    <View style={styles.radioDot}>
-                      {formData.gender === 'FEMALE' && (
-                        <View style={styles.radioDotInner} />
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.radioButtonText,
-                        formData.gender === 'FEMALE' &&
-                          styles.radioButtonTextActive,
-                      ]}>
-                      여성
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>주소</Text>
-              <Input
-                placeholder="주소를 입력하세요"
-                value={formData.address}
-                onChangeText={text => setFormData('address', text)}
-                style={{
-                  borderColor: '#E5E7EB',
-                  backgroundColor: 'white',
-                  height: 50,
-                  fontSize: 16,
-                }}
-              />
-            </View>
-          </View>
-
-          {/* 의료 정보 */}
-          <View>
-            <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 30}}>
-              의료 정보
-            </Text>
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>병력</Text>
-              <Input
-                placeholder="병력 정보를 입력하세요"
-                value={formData.medicalHistory}
-                onChangeText={text => setFormData('medicalHistory', text)}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                style={{
-                  borderColor: '#E5E7EB',
-                  backgroundColor: 'white',
-                  fontSize: 16,
-                  minHeight: 120,
-                }}
-              />
-            </View>
-
-            <View style={styles.inputLayout}>
-              <Text style={styles.label}>혈액형</Text>
+            {/* 피보호자 프로필 요약 영역 */}
+            <View style={styles.profileCard}>
               <Pressable
-                onPress={() => setBloodTypePickerVisible(prev => !prev)}>
-                <View style={styles.dateInput}>
-                  <Text style={styles.dateText}>
-                    {formData.bloodType || '혈액형을 선택하세요'}
+                onPress={selectImageHandler}
+                style={styles.avatarContainer}>
+                {displayImageUri ? (
+                  <Image
+                    source={require('../assets/senior-female.jpg')}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Image
+                      source={require('../assets/profile-fill.png')}
+                      style={{width: 24, height: 24, tintColor: '#64748B'}}
+                      resizeMode="contain"
+                    />
+                  </View>
+                )}
+              </Pressable>
+
+              <View style={{flex: 1}}>
+                <Text style={styles.nameText}>
+                  {formData.name ? formData.name : '이름 미입력'}
+                </Text>
+                <View style={styles.subRow}>
+                  <Text style={styles.subText}>
+                    {(() => {
+                      // 성별 표기 정규화
+                      const g = formData.gender;
+                      if (g === 'MALE' || g === '남성') return '남성';
+                      if (g === 'FEMALE' || g === '여성') return '여성';
+                      return '성별 미정';
+                    })()}
+                  </Text>
+                  <Text style={styles.dot}>·</Text>
+                  <Text style={styles.subText}>
+                    {typeof calcAge(formData.birthDate) === 'number'
+                      ? `${calcAge(formData.birthDate)}세`
+                      : '나이 미정'}
                   </Text>
                 </View>
-              </Pressable>
-              {bloodTypePickerVisible && (
-                <View style={styles.dropdownContainer}>
-                  <FlatList
-                    data={['A', 'B', 'O', 'AB']}
-                    keyExtractor={item => item}
-                    renderItem={({item}) => (
-                      <Pressable
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setFormData('bloodType', item);
-                          setBloodTypePickerVisible(false);
-                        }}>
-                        <Text>{item}</Text>
-                      </Pressable>
-                    )}
-                  />
-                </View>
+              </View>
+
+              <View style={styles.statusBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>관리중</Text>
+              </View>
+            </View>
+
+            {/* 기본 정보 */}
+            <View>
+              <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 20}}>
+                기본 정보
+              </Text>
+
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>이름 *</Text>
+                <Input
+                  placeholder="이름을 입력하세요"
+                  value={formData.name}
+                  onChangeText={text => setFormData('name', text)}
+                  style={{
+                    borderColor: '#E5E7EB',
+                    backgroundColor: 'white',
+                    height: 50,
+                    fontSize: 16,
+                  }}
+                />
+              </View>
+
+              {/* 생년월일 DatePicker */}
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>생년월일 *</Text>
+                <Pressable onPress={() => setShowDatePicker(true)}>
+                  <View style={[styles.dateInput, styles.dateRow]}>
+                    <Text style={styles.dateText}>
+                      {formData.birthDate
+                        ? formatKoreanDate(formData.birthDate)
+                        : '날짜를 선택하세요'}
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={faCalendarDays}
+                      color="#94A3B8"
+                      size={18}
+                    />
+                  </View>
+                </Pressable>
+              </View>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  testID="dateTimePicker"
+                  value={date}
+                  mode={'date'}
+                  onChange={onDateChange}
+                />
               )}
+
+              {/* 성별 라디오 버튼 */}
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>성별 *</Text>
+                <View style={styles.radioContainer}>
+                  <Pressable
+                    style={[
+                      styles.radioButton,
+                      formData.gender === 'MALE' && styles.radioButtonActive,
+                    ]}
+                    onPress={() => setFormData('gender', 'MALE')}>
+                    <View style={styles.radioButtonContent}>
+                      <View style={styles.radioDot}>
+                        {formData.gender === 'MALE' && (
+                          <View style={styles.radioDotInner} />
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.radioButtonText,
+                          formData.gender === 'MALE' &&
+                            styles.radioButtonTextActive,
+                        ]}>
+                        남성
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.radioButton,
+                      formData.gender === 'FEMALE' && styles.radioButtonActive,
+                    ]}
+                    onPress={() => setFormData('gender', 'FEMALE')}>
+                    <View style={styles.radioButtonContent}>
+                      <View style={styles.radioDot}>
+                        {formData.gender === 'FEMALE' && (
+                          <View style={styles.radioDotInner} />
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.radioButtonText,
+                          formData.gender === 'FEMALE' &&
+                            styles.radioButtonTextActive,
+                        ]}>
+                        여성
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              </View>
+
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>주소</Text>
+                <Input
+                  placeholder="주소를 입력하세요"
+                  value={formData.address}
+                  onChangeText={text => setFormData('address', text)}
+                  style={{
+                    borderColor: '#E5E7EB',
+                    backgroundColor: 'white',
+                    height: 50,
+                    fontSize: 16,
+                  }}
+                />
+              </View>
+            </View>
+
+            {/* 의료 정보 */}
+            <View>
+              <Text style={{fontSize: 18, fontWeight: 700, marginBottom: 30}}>
+                의료 정보
+              </Text>
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>병력</Text>
+                <Input
+                  placeholder="병력 정보를 입력하세요"
+                  value={formData.medicalHistory}
+                  onChangeText={text => setFormData('medicalHistory', text)}
+                  multiline
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                  style={{
+                    borderColor: '#E5E7EB',
+                    backgroundColor: 'white',
+                    fontSize: 16,
+                    minHeight: 120,
+                  }}
+                />
+              </View>
+
+              <View style={styles.inputLayout}>
+                <Text style={styles.label}>혈액형</Text>
+                <Pressable
+                  onPress={() => setBloodTypePickerVisible(prev => !prev)}>
+                  <View style={styles.dateInput}>
+                    <Text style={styles.dateText}>
+                      {formData.bloodType || '혈액형을 선택하세요'}
+                    </Text>
+                  </View>
+                </Pressable>
+                {bloodTypePickerVisible && (
+                  <View style={styles.dropdownContainer}>
+                    <FlatList
+                      data={['A', 'B', 'O', 'AB']}
+                      keyExtractor={item => item}
+                      renderItem={({item}) => (
+                        <Pressable
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setFormData('bloodType', item);
+                            setBloodTypePickerVisible(false);
+                          }}>
+                          <Text>{item}</Text>
+                        </Pressable>
+                      )}
+                    />
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-        </View>
 
-        <View style={styles.btnRow}>
-          <Pressable style={[styles.btn, styles.btnCancel]} onPress={() => navigation.goBack()}>
-            <Text style={[styles.btnText, styles.btnTextCancel]}>취소</Text>
-          </Pressable>
-          <Pressable style={[styles.btn, styles.btnPrimary]} onPress={handleRegister}>
-            <Text style={[styles.btnText, styles.btnTextPrimary]}>저장하기</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </Container>
+          <View style={styles.btnRow}>
+            <Pressable
+              style={[styles.btn, styles.btnCancel]}
+              onPress={() => navigation.goBack()}>
+              <Text style={[styles.btnText, styles.btnTextCancel]}>취소</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.btn, styles.btnPrimary]}
+              onPress={handleRegister}>
+              <Text style={[styles.btnText, styles.btnTextPrimary]}>
+                저장하기
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </Container>
+    </KeyboardAvoidingView>
   );
 };
 
