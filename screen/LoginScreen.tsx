@@ -14,7 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 
 const AUTH_URL = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/kakao`;
 // const AUTH_URL = 'https://bd00a025d02d.ngrok-free.app/oauth2/authorization/kakao';
-
+console.log('AUTH_URL:', AUTH_URL);
 const FINAL_REDIRECT_URI = 'http://localhost:3000/oauth2/redirect';
 
 const LoginScreen = () => {

@@ -15,6 +15,7 @@ const getAccessToken = async (): Promise<string | null> => {
 
 // 플랫폼에 따라 다른 localhost 주소를 사용
 const baseURL = process.env.REACT_APP_API_BASE_URL;
+console.log('API Base URL:', baseURL);
 export const API_BASE_URL = baseURL;
 
 const apiClient = axios.create({

@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   logContainer: {
     marginTop: 20,
-    paddingHorizontal: layout.HORIZONTAL_VALUE,
+    // paddingHorizontal: layout.HORIZONTAL_VALUE,
   },
   logSection: {
     marginBottom: 20,

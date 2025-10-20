@@ -13,7 +13,7 @@ export const useAuth = () => {
     const checkAuthStatus = async () => {
       try {
         const token = await AsyncStorage.getItem('accessToken');
-      console.log('저장된 토큰:', token);
+         console.log('저장된 토큰:', token);
         if (token) {
           await getMe();
           setInitialRoute('MainScreen');

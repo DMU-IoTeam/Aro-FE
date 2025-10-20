@@ -13,6 +13,7 @@ export interface User {
  */
 export const getMe = async (): Promise<User> => {
   // apiClient에 설정된 인터셉터가 자동으로 헤더에 토큰을 추가해줍니다.
+  console.log('Fetching current user info...');
   const response = await apiClient.get<User>('/api/users/me');
   console.log(response);
   return response.data;

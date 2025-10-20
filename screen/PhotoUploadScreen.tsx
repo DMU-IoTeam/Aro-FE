@@ -137,7 +137,6 @@ const PhotoUploadScreen = () => {
   };
 
   return (
-    <Container>
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}>
@@ -216,13 +215,13 @@ const PhotoUploadScreen = () => {
           )}
         </View>
       </ScrollView>
-    </Container>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    backgroundColor: 'white',
   },
   sectionTitle: {
     fontSize: 16,
@@ -248,7 +247,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     width: '100%',
-    height: 250,
+    height: 300,
     resizeMode: 'cover',
     borderRadius: 10,
     backgroundColor: '#F1F5F9',

@@ -23,6 +23,7 @@ import {faPills, faHeartPulse, faPuzzlePiece} from '@fortawesome/free-solid-svg-
 const MainScreen = () => {
   const navigation = useNavigation();
   const {seniors, isLoading, error, calculateAge} = useSeniors();
+  console.log('Seniors data:', seniors);
 
   const navigateHandler = (screen: string) => {
     navigation.navigate(screen);

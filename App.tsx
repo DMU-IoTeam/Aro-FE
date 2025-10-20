@@ -33,6 +33,16 @@ import HealthCheckCalendarScreen from './screen/HealthCheckCalendarScreen';
 
 const Stack = createNativeStackNavigator();
 
+import { LogBox } from 'react-native';
+
+// 모든 로그 / 오류 / 경고 숨기기
+LogBox.ignoreAllLogs(true);
+
+// 글로벌 에러 핸들러 설정
+ErrorUtils.setGlobalHandler(() => {
+  // 아무것도 하지 않음 (RedBox 표시 방지)
+});
+
 function RootStack({initialRouteName}: {initialRouteName: string}) {
   return (
     <Stack.Navigator
@@ -111,7 +121,7 @@ function RootStack({initialRouteName}: {initialRouteName: string}) {
       <Stack.Screen
         name="CalendarScreen"
         component={CalendarScreen}
-        options={{title: '캘린더'}}
+        options={{title: '복약 기록 캘린더'}}
       />
       <Stack.Screen name="PhotoUploadScreen" component={PhotoUploadScreen} 
         options={{title: '게임 사진 업로드'}}/>
@@ -129,6 +139,7 @@ function App(): React.JSX.Element {
   const navigationRef = useNavigationContainerRef<any>();
   useFCM(navigationRef);
 
+  console.log('Initial Route:', initialRoute);
   if (isLoading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
