@@ -53,6 +53,7 @@ type ScheduleSettingRouteParams = {
           memo: string;
           startTime: string;
         };
+        defaultDate?: string;
       }
     | undefined;
 };
@@ -75,6 +76,7 @@ const ScheduleSettingScreen = () => {
   const {addSchedule, updateSchedule} = useActivityScheduleStore();
   const editSchedule =
     route.params?.mode === 'edit' ? route.params.schedule : null;
+  const defaultDateParam = route.params?.defaultDate;
   const isEditMode = !!editSchedule;
 
   // Form State
@@ -129,14 +131,19 @@ const ScheduleSettingScreen = () => {
     } else {
       setTitle('');
       setMemo('');
-      setDate(new Date());
+      if (defaultDateParam) {
+        const parsed = new Date(`${defaultDateParam}T00:00:00`);
+        setDate(parsed);
+      } else {
+        setDate(new Date());
+      }
       setAmPmIndex(0);
       setTimeout(() => {
         setHourIndex(centerHour);
         setMinuteIndex(centerMinute);
       }, 10);
     }
-  }, [editSchedule]);
+  }, [editSchedule, defaultDateParam]);
   // ------------------------
 
   const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {

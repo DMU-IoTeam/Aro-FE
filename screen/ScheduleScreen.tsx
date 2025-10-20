@@ -186,7 +186,9 @@ const ScheduleScreen = () => {
         <View style={styles.plusButtonContainer}>
           <Pressable
             onPress={() => {
-              navigation.navigate('ScheduleSettingScreen');
+              navigation.navigate('ScheduleSettingScreen', {
+                defaultDate: selectedDate,
+              });
             }}
             style={styles.plusButton}>
             <Text style={styles.plusButtonText}>+</Text>
