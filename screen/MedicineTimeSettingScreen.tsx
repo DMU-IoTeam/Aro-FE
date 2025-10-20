@@ -3,19 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   Pressable,
   Alert,
   ScrollView,
 } from 'react-native';
 import WheelPicker from 'react-native-wheely';
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
 import layout from '../constants/layout';
 import Container from '../layouts/Container';
 import {useSeniorStore} from '../store/senior.store';
-import {addMedicationSchedule} from '../api/medication';
+import {
+  addMedicationSchedule,
+  updateMedicationSchedule,
+} from '../api/medication';
 
 const LOOP_COUNT = 50;
 const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
@@ -30,8 +32,26 @@ const repeatedMinutes = Array(LOOP_COUNT).fill(baseMinutes).flat();
 const centerHour = Math.floor(repeatedHours.length / 2);
 const centerMinute = Math.floor(repeatedMinutes.length / 2);
 
+type MedicineTimeSettingRouteParams = {
+  MedicineTimeSettingScreen:
+    | {
+        mode?: 'edit';
+        schedule?: {
+          scheduleId: number;
+          time: string;
+          isAm: boolean;
+          items: Array<{name: string; memo: string}>;
+          userId: number;
+        };
+      }
+    | undefined;
+};
+
 const MedicineTimeSettingScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<
+    RouteProp<MedicineTimeSettingRouteParams, 'MedicineTimeSettingScreen'>
+  >();
   const {seniors} = useSeniorStore();
 
   const [hourIndex, setHourIndex] = useState(0);
@@ -47,6 +67,8 @@ const MedicineTimeSettingScreen = () => {
     Array<{name: string; memo: string}>
   >([]);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const editSchedule = route.params?.mode === 'edit' ? route.params.schedule : null;
+  const isEditMode = !!editSchedule;
 
   const beginWheel = () => setScrollEnabled(false);
   const endWheel = () => setScrollEnabled(true);
@@ -75,6 +97,35 @@ const MedicineTimeSettingScreen = () => {
     }, 10);
   }, []);
 
+const centerAlignedIndex = (base: string[], center: number, value: string) => {
+  const baseIndex = base.findIndex(item => item === value);
+  if (baseIndex === -1) {
+    return center;
+  }
+  const cycle = Math.floor(center / base.length);
+    return cycle * base.length + baseIndex;
+  };
+
+  useEffect(() => {
+    if (!editSchedule) {
+      return;
+    }
+    const [hourPart, minutePart] = editSchedule.time.split(':');
+    const normalizedHour = String(Number(hourPart) === 0 ? 12 : Number(hourPart));
+    const normalizedMinute = minutePart.padStart(2, '0');
+
+    setAmPmIndex(editSchedule.isAm ? 0 : 1);
+    setHourIndex(
+      centerAlignedIndex(baseHours, centerHour, normalizedHour),
+    );
+    setMinuteIndex(
+      centerAlignedIndex(baseMinutes, centerMinute, normalizedMinute),
+    );
+    setMedicineArray(
+      editSchedule.items.map(item => ({name: item.name, memo: item.memo})),
+    );
+  }, [editSchedule]);
+
   const medicineAddHandler = () => {
     if (medicineName.length === 0) {
       Alert.alert('오류', '약 이름을 입력해주세요.');
@@ -86,12 +137,11 @@ const MedicineTimeSettingScreen = () => {
     setDose('1');
   };
 
-  const handleSave = async () => {
-    if (seniors.length === 0) {
-      Alert.alert('오류', '등록된 피보호자가 없습니다.');
-      return;
-    }
+  const removeMedicineItem = (index: number) => {
+    setMedicineArray(prev => prev.filter((_, idx) => idx !== index));
+  };
 
+  const handleSave = async () => {
     // 항목이 없으면 현재 입력으로 1개 구성
     const items =
       medicineArray.length > 0
@@ -105,7 +155,14 @@ const MedicineTimeSettingScreen = () => {
       return;
     }
 
-    const userId = seniors[0].id;
+    const resolvedUserId =
+      editSchedule?.userId ?? seniors[0]?.id ?? null;
+
+    if (!resolvedUserId) {
+      Alert.alert('오류', '등록된 피보호자가 없습니다.');
+      return;
+    }
+
     const isAm = AMPM[ampmIndex] === '오전';
     let hour = parseInt(repeatedHours[hourIndex], 10);
 
@@ -119,19 +176,26 @@ const MedicineTimeSettingScreen = () => {
     const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
 
     const payload = {
-      userId,
+      userId: resolvedUserId,
       time,
       items,
     };
 
     try {
-      await addMedicationSchedule(payload);
-      Alert.alert('성공', '복약 일정이 성공적으로 등록되었습니다.', [
-        {text: '확인', onPress: () => navigation.goBack()},
-      ]);
+      if (isEditMode && editSchedule) {
+        await updateMedicationSchedule(editSchedule.scheduleId, payload);
+        Alert.alert('성공', '복약 일정이 수정되었습니다.', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      } else {
+        await addMedicationSchedule(payload);
+        Alert.alert('성공', '복약 일정이 성공적으로 등록되었습니다.', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      }
     } catch (error) {
       console.error(error);
-      Alert.alert('오류', '일정 등록 중 오류가 발생했습니다.');
+      Alert.alert('오류', '일정 저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -261,6 +325,11 @@ const MedicineTimeSettingScreen = () => {
                 <Text style={{color: '#64748B', marginTop: 2}}>
                   {item.memo}
                 </Text>
+                <Pressable
+                  style={styles.previewRemove}
+                  onPress={() => removeMedicineItem(index)}>
+                  <Text style={styles.previewRemoveText}>삭제</Text>
+                </Pressable>
               </View>
             ))}
           </View>
@@ -268,7 +337,7 @@ const MedicineTimeSettingScreen = () => {
 
         <View style={{marginVertical: 16}}>
           <CommonButton onPress={handleSave}>
-            복약 일정 추가하기
+            {isEditMode ? '복약 일정 수정하기' : '복약 일정 추가하기'}
           </CommonButton>
         </View>
       </ScrollView>
@@ -381,6 +450,15 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: 'white',
     marginBottom: 10,
+  },
+  previewRemove: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  previewRemoveText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#EF4444',
   },
   bottomAction: {
     position: 'absolute',

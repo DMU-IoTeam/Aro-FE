@@ -171,6 +171,7 @@ const MedicineTimeScreen = () => {
             time={item.time}
             isAm={item.isAm}
             medicine={item.medicine}
+            userId={item.userId}
             onDelete={handleDelete}
           />
         )}
@@ -190,6 +191,7 @@ type MedicineScheduleItemProps = {
   time: string;
   isAm: boolean;
   medicine: MedicationItem[];
+  userId: number;
   onDelete: (scheduleId: number) => void;
 };
 
@@ -198,15 +200,43 @@ export const MedicineScheduleItem = ({
   time,
   isAm,
   medicine,
+  userId,
   onDelete,
 }: MedicineScheduleItemProps) => {
   const navigation = useNavigation();
+  const handleEdit = () => {
+    navigation.navigate('MedicineTimeSettingScreen', {
+      mode: 'edit',
+      schedule: {
+        scheduleId,
+        time,
+        isAm,
+        items: medicine.map(med => ({name: med.name, memo: med.memo})),
+        userId,
+      },
+    });
+  };
   return (
     <View style={styles.itemContainer}>
-      {/* 시간 라벨 */}
-      <Text style={styles.timeLabel}>
-        {isAm ? '오전' : '오후'} ({time})
-      </Text>
+      <View style={styles.itemHeaderRow}>
+        <Text style={styles.timeLabel}>
+          {isAm ? '오전' : '오후'} ({time})
+        </Text>
+        <View style={styles.actionRow}>
+          <Pressable
+            style={[styles.actionBtn, styles.actionBtnEdit]}
+            onPress={handleEdit}>
+            <Text style={[styles.actionText, styles.actionTextEdit]}>수정</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, styles.actionBtnDelete]}
+            onPress={() => onDelete(scheduleId)}>
+            <Text style={[styles.actionText, styles.actionTextDelete]}>
+              삭제
+            </Text>
+          </Pressable>
+        </View>
+      </View>
 
       {/* 약 목록 */}
       <View style={{gap: 10}}>
@@ -219,15 +249,6 @@ export const MedicineScheduleItem = ({
               <View style={{flex: 1}}>
                 <Text style={styles.medName}>{item.name}</Text>
                 <Text style={styles.medMeta}>{item.memo || '메모 없음'}</Text>
-              </View>
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={[styles.actionBtn, styles.actionBtnDelete]}
-                  onPress={() => onDelete(scheduleId)}>
-                  <Text style={[styles.actionText, styles.actionTextDelete]}>
-                    삭제
-                  </Text>
-                </Pressable>
               </View>
             </View>
           );
@@ -335,6 +356,12 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderWidth: 1,
     marginBottom: 14,
+    gap: 12,
+  },
+  itemHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   timeLabel: {
     color: '#475569',

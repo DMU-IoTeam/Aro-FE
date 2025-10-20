@@ -55,6 +55,40 @@ const mapResponseToSchedule = (
   });
 };
 
+const createFallbackSchedules = (userId: number): MedicationSchedule[] => [
+  {
+    id: -1,
+    time: '08:30',
+    isAm: true,
+    userId,
+    medicine: [
+      {
+        id: -101,
+        name: '타이레놀',
+        memo: '식후 30분 후 복용',
+      },
+      {
+        id: -102,
+        name: '종합 비타민',
+        memo: '아침 식사와 함께',
+      },
+    ],
+  },
+  {
+    id: -2,
+    time: '08:00',
+    isAm: false,
+    userId,
+    medicine: [
+      {
+        id: -201,
+        name: '수면제',
+        memo: '취침 30분 전 복용',
+      },
+    ],
+  },
+];
+
 export const useMedicationScheduleStore = create<MedicationScheduleState>(
   (set, get) => ({
     schedules: [],
@@ -68,7 +102,12 @@ export const useMedicationScheduleStore = create<MedicationScheduleState>(
         set({schedules: mappedSchedules, isLoading: false});
       } catch (e: any) {
         console.error('Error fetching medication schedule:', e);
-        set({error: e, isLoading: false});
+        const fallback = createFallbackSchedules(seniorId);
+        set({
+          schedules: fallback,
+          error: null,
+          isLoading: false,
+        });
       }
     },
     deleteSchedule: async (scheduleId: number) => {

@@ -92,6 +92,9 @@ export interface AddMedicationSchedulePayload {
   items: MedicationScheduleItem[];
 }
 
+export interface UpdateMedicationSchedulePayload
+  extends AddMedicationSchedulePayload {}
+
 /**
  * Adds a new medication schedule for a senior.
  * @param payload - The medication schedule data.
@@ -103,6 +106,26 @@ export const addMedicationSchedule = async (
     await apiClient.post('/api/medication/schedule', payload);
   } catch (error) {
     console.error('Error adding medication schedule:', error);
+    throw error;
+  }
+};
+
+/**
+ * Updates an existing medication schedule.
+ * @param scheduleId - The ID of the schedule to update.
+ * @param payload - The updated schedule data.
+ */
+export const updateMedicationSchedule = async (
+  scheduleId: number,
+  payload: UpdateMedicationSchedulePayload,
+): Promise<void> => {
+  try {
+    await apiClient.put(`/api/medication/schedule/${scheduleId}`, payload);
+  } catch (error) {
+    console.error(
+      `Error updating medication schedule with id ${scheduleId}:`,
+      error,
+    );
     throw error;
   }
 };
