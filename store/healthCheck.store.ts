@@ -26,6 +26,21 @@ interface HealthCheckState {
   deleteQuestion: (questionId: string) => Promise<void>;
 }
 
+const fallbackQuestions = (): HealthQuestion[] => [
+  {
+    id: 'fallback-1',
+    questionText: '오늘 하루 기분은 어떠셨나요?',
+    optionType: 'default',
+    options: [...defaultOptions],
+  },
+  {
+    id: 'fallback-2',
+    questionText: '어제 밤 수면의 질은 어떠셨나요?',
+    optionType: 'custom',
+    options: ['푹 잤어요', '보통이었어요', '잠을 설쳤어요'],
+  },
+];
+
 export const useHealthCheckStore = create<HealthCheckState>((set, get) => ({
   questions: [],
   isLoading: false,
@@ -41,7 +56,7 @@ export const useHealthCheckStore = create<HealthCheckState>((set, get) => ({
       set({questions, isLoading: false});
     } catch (error) {
       console.error('Failed to fetch health questions:', error);
-      set({isLoading: false});
+      set({questions: fallbackQuestions(), isLoading: false});
     }
   },
 

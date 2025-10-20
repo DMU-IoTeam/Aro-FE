@@ -3,24 +3,17 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
   Pressable,
+  Alert,
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Container from '../layouts/Container';
 import layout from '../constants/layout';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {
-  faPen,
-  faEllipsisVertical,
-  faPlus,
-  faBell,
-  faCalendarWeek,
-  faGear,
-} from '@fortawesome/free-solid-svg-icons';
+import {faPlus} from '@fortawesome/free-solid-svg-icons';
 import {useHealthCheckStore} from '../store/healthCheck.store';
 import {faCalendarDays} from '@fortawesome/free-regular-svg-icons';
 
@@ -59,24 +52,15 @@ const mapOptionTone = (label: string) => {
 
 const HealthCheckScreen = () => {
   const navigation = useNavigation<HealthCheckScreenNavigationProp>();
-  const {questions, isLoading, fetchQuestions} = useHealthCheckStore();
-  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>({});
+  const {questions, isLoading, fetchQuestions, deleteQuestion} =
+    useHealthCheckStore();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       fetchQuestions();
     }, [fetchQuestions]),
   );
-
-  useEffect(() => {
-    setEnabledMap(prev => {
-      const next: Record<string, boolean> = {};
-      questions.forEach(q => {
-        next[q.id] = prev[q.id] ?? true;
-      });
-      return next;
-    });
-  }, [questions]);
 
   const chipsByQuestion = useMemo(
     () =>
@@ -86,8 +70,25 @@ const HealthCheckScreen = () => {
     [questions],
   );
 
-  const toggleQuestion = (id: string) => {
-    setEnabledMap(prev => ({...prev, [id]: !prev[id]}));
+  const confirmDelete = (id: string) => {
+    Alert.alert('질문 삭제', '해당 질문을 삭제할까요?', [
+      {text: '취소', style: 'cancel'},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingId(id);
+          try {
+            await deleteQuestion(id);
+          } catch (error) {
+            console.error('Failed to delete question:', error);
+            Alert.alert('삭제 실패', '질문 삭제 중 오류가 발생했습니다.');
+          } finally {
+            setDeletingId(null);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -113,10 +114,8 @@ const HealthCheckScreen = () => {
         ) : (
           questions.map((item, idx) => {
             const chips = chipsByQuestion[idx] || [];
-            const isEnabled = enabledMap[item.id] ?? true;
             const visibleChips = chips.slice(0, 4);
             const remain = chips.length - visibleChips.length;
-            console.log(item);
             return (
               <View key={item.id} style={styles.questionCard}>
                 <View style={styles.cardHeader}>
@@ -132,14 +131,33 @@ const HealthCheckScreen = () => {
                       {item.questionText}
                     </Text>
                   </View>
-                  <View style={styles.cardActions}>
+                  <View style={styles.cardActionRow}>
                     <Pressable
+                      style={[styles.cardActionBtn, styles.cardActionEdit]}
                       onPress={() =>
                         navigation.navigate('HealthCheckQuestion', {
                           questionId: item.id,
                         })
                       }>
-                      <FontAwesomeIcon icon={faPen} size={16} color="#94A3B8" />
+                      <Text style={[styles.cardActionText, styles.cardActionEditText]}>
+                        수정
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.cardActionBtn, styles.cardActionDelete]}
+                      onPress={() => confirmDelete(item.id)}
+                      disabled={deletingId === item.id}>
+                      {deletingId === item.id ? (
+                        <ActivityIndicator size="small" color="#EF4444" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.cardActionText,
+                            styles.cardActionDeleteText,
+                          ]}>
+                          삭제
+                        </Text>
+                      )}
                     </Pressable>
                   </View>
                 </View>
@@ -243,9 +261,36 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
   },
-  cardActions: {
+  cardActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  cardActionBtn: {
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardActionEdit: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'white',
+  },
+  cardActionEditText: {
+    color: '#3B82F6',
+  },
+  cardActionDelete: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+  },
+  cardActionDeleteText: {
+    color: '#EF4444',
   },
   optionRow: {
     marginTop: 8,
