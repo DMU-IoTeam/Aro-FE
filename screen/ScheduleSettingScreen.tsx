@@ -116,10 +116,16 @@ const ScheduleSettingScreen = () => {
       if (hour12 === 0) hour12 = 12;
 
       setAmPmIndex(isAm ? 0 : 1);
-      setHourIndex(alignIndex(baseHours, centerHour, String(hour12)));
-      setMinuteIndex(
-        alignIndex(baseMinutes, centerMinute, String(minute).padStart(2, '0')),
+      const nextHourIndex = alignIndex(baseHours, centerHour, String(hour12));
+      const nextMinuteIndex = alignIndex(
+        baseMinutes,
+        centerMinute,
+        String(minute).padStart(2, '0'),
       );
+      setTimeout(() => {
+        setHourIndex(nextHourIndex);
+        setMinuteIndex(nextMinuteIndex);
+      }, 10);
     } else {
       setTitle('');
       setMemo('');

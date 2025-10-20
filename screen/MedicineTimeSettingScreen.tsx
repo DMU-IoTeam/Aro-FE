@@ -111,8 +111,13 @@ const MedicineTimeSettingScreen = () => {
     const normalizedMinute = minutePart.padStart(2, '0');
 
     setAmPmIndex(editSchedule.isAm ? 0 : 1);
-    setHourIndex(alignIndex(baseHours, normalizedHour, centerHour));
-    setMinuteIndex(alignIndex(baseMinutes, normalizedMinute, centerMinute));
+    const nextHourIndex = alignIndex(baseHours, normalizedHour, centerHour);
+    const nextMinuteIndex = alignIndex(baseMinutes, normalizedMinute, centerMinute);
+    // react-native-wheely sometimes needs the initial index to be set after mount
+    setTimeout(() => {
+      setHourIndex(nextHourIndex);
+      setMinuteIndex(nextMinuteIndex);
+    }, 10);
     setMedicineArray(
       editSchedule.items.map(item => ({name: item.name, memo: item.memo})),
     );
