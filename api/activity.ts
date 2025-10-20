@@ -62,6 +62,13 @@ export interface ActivityScheduleResponse {
   startTime: string;
 }
 
+export interface UpdateActivitySchedulePayload {
+  seniorId: number;
+  title: string;
+  memo: string;
+  startTime: string;
+}
+
 /**
  * Adds a new activity schedule.
  * @param payload - The schedule data.
@@ -74,6 +81,18 @@ export const addActivitySchedule = async (
     await apiClient.post('/api/schedules', payload);
   } catch (error) {
     console.error('Error adding activity schedule:', error);
+    throw error;
+  }
+};
+
+export const updateActivitySchedule = async (
+  scheduleId: number,
+  payload: UpdateActivitySchedulePayload,
+): Promise<void> => {
+  try {
+    await apiClient.put(`/api/schedules/${scheduleId}`, payload);
+  } catch (error) {
+    console.error(`Error updating activity schedule ${scheduleId}:`, error);
     throw error;
   }
 };

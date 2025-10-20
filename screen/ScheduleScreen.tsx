@@ -113,6 +113,28 @@ const ScheduleScreen = () => {
 
   const schedulesForSelectedDate = schedulesByDate[selectedDate] || [];
 
+  const handleEdit = (schedule: {
+    id: number;
+    title: string;
+    memo: string;
+    startTimeISO: string;
+  }) => {
+    if (seniors.length === 0) {
+      return;
+    }
+    const seniorId = seniors[0].id;
+    navigation.navigate('ScheduleSettingScreen', {
+      mode: 'edit',
+      schedule: {
+        scheduleId: schedule.id,
+        title: schedule.title,
+        memo: schedule.memo,
+        startTime: schedule.startTimeISO,
+        seniorId,
+      },
+    });
+  };
+
   if (seniors.length === 0) {
     return (
       <Container style={styles.centerContainer}>
@@ -182,15 +204,22 @@ const ScheduleScreen = () => {
                     <View style={{flex: 1}}>
                       <Text style={styles.scheduleTime}>{schedule.time}</Text>
                       <Text style={styles.scheduleTitle}>{schedule.title}</Text>
-                      {schedule.memo && (
+                      {schedule.memo ? (
                         <Text style={styles.scheduleMemo}>{schedule.memo}</Text>
-                      )}
+                      ) : null}
                     </View>
-                    <Pressable
-                      onPress={() => handleDelete(schedule.id)}
-                      style={styles.deleteButton}>
-                      <Text style={styles.deleteButtonText}>삭제</Text>
-                    </Pressable>
+                    <View style={styles.scheduleActionColumn}>
+                      <Pressable
+                        onPress={() => handleEdit(schedule)}
+                        style={styles.editButton}>
+                        <Text style={styles.editButtonText}>수정</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleDelete(schedule.id)}
+                        style={styles.deleteButton}>
+                        <Text style={styles.deleteButtonText}>삭제</Text>
+                      </Pressable>
+                    </View>
                   </View>
                 ))
               ) : (
@@ -274,7 +303,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   scheduleTime: {
     fontSize: 14,
@@ -289,6 +319,24 @@ const styles = StyleSheet.create({
   scheduleMemo: {
     fontSize: 14,
     color: '#555',
+  },
+  scheduleActionColumn: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    height: '100%',
+  },
+  editButton: {
+    borderColor: '#3B82F6',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: layout.BORDER_RADIUS,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    fontWeight: '600',
+    color: '#3B82F6',
   },
   noScheduleText: {
     textAlign: 'center',

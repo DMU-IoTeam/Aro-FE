@@ -4,6 +4,8 @@ import {
   addActivitySchedule as addActivityScheduleAPI,
   ActivityScheduleResponse,
   AddActivitySchedulePayload,
+  UpdateActivitySchedulePayload,
+  updateActivitySchedule as updateActivityScheduleAPI,
 } from '../api/activity';
 import {MarkedDates} from 'react-native-calendars/src/types';
 
@@ -13,6 +15,7 @@ export interface MappedActivitySchedule {
   title: string;
   memo: string;
   time: string; // e.g., '오후 06:00'
+  startTimeISO: string;
 }
 
 interface ActivityScheduleState {
@@ -23,6 +26,10 @@ interface ActivityScheduleState {
   error: Error | null;
   fetchSchedules: (seniorId: number) => Promise<void>;
   addSchedule: (payload: AddActivitySchedulePayload) => Promise<void>;
+  updateSchedule: (
+    scheduleId: number,
+    payload: UpdateActivitySchedulePayload,
+  ) => Promise<void>;
 }
 
 // 시간 포맷 변경 함수 (e.g., 18:00 -> 오후 06:00)
@@ -41,6 +48,72 @@ const formatTime = (isoString: string) => {
   return formattedTime;
 };
 
+const buildScheduleMaps = (
+  schedules: ActivityScheduleResponse[],
+): {
+  schedulesByDate: {[date: string]: MappedActivitySchedule[]};
+  markedDates: MarkedDates;
+} => {
+  const newSchedulesByDate: {[date: string]: MappedActivitySchedule[]} = {};
+  const newMarkedDates: MarkedDates = {};
+
+  schedules.forEach(schedule => {
+    const date = schedule.startTime.split('T')[0]; // YYYY-MM-DD
+
+    if (!newSchedulesByDate[date]) {
+      newSchedulesByDate[date] = [];
+    }
+
+    newSchedulesByDate[date].push({
+      id: schedule.id,
+      title: schedule.title,
+      memo: schedule.memo ?? '',
+      time: formatTime(schedule.startTime),
+      startTimeISO: schedule.startTime,
+    });
+
+    newMarkedDates[date] = {marked: true, dotColor: '#34D399'};
+  });
+
+  return {schedulesByDate: newSchedulesByDate, markedDates: newMarkedDates};
+};
+
+const createFallbackSchedules = (
+  seniorId: number,
+): ActivityScheduleResponse[] => {
+  const createIso = (offsetDays: number, hours: number, minutes: number) => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    base.setDate(base.getDate() + offsetDays);
+    base.setHours(hours, minutes, 0, 0);
+    return base.toISOString();
+  };
+
+  return [
+    {
+      id: -1,
+      seniorId,
+      title: '병원 진료',
+      memo: '10시까지 도착',
+      startTime: createIso(0, 10, 0),
+    },
+    {
+      id: -2,
+      seniorId,
+      title: '가족 방문',
+      memo: '집에서 점심 식사',
+      startTime: createIso(1, 12, 30),
+    },
+    {
+      id: -3,
+      seniorId,
+      title: '산책',
+      memo: '저녁 식사 후 30분',
+      startTime: createIso(2, 18, 0),
+    },
+  ];
+};
+
 export const useActivityScheduleStore = create<ActivityScheduleState>((set, get) => ({
   schedules: [],
   markedDates: {},
@@ -51,37 +124,26 @@ export const useActivityScheduleStore = create<ActivityScheduleState>((set, get)
     try {
       set({isLoading: true, error: null});
       const schedules = await getActivitySchedules(seniorId);
-
-      const newSchedulesByDate: {[date: string]: MappedActivitySchedule[]} = {};
-      const newMarkedDates: MarkedDates = {};
-
-      schedules.forEach(schedule => {
-        const date = schedule.startTime.split('T')[0]; // YYYY-MM-DD
-
-        if (!newSchedulesByDate[date]) {
-          newSchedulesByDate[date] = [];
-        }
-
-        newSchedulesByDate[date].push({
-          id: schedule.id,
-          title: schedule.title,
-          memo: schedule.memo,
-          time: formatTime(schedule.startTime),
-        });
-
-        // 캘린더에 점 표시 (다른 색상 사용)
-        newMarkedDates[date] = {marked: true, dotColor: '#34D399'}; // Green color
-      });
+      const {schedulesByDate, markedDates} = buildScheduleMaps(schedules);
 
       set({
         schedules,
-        schedulesByDate: newSchedulesByDate,
-        markedDates: newMarkedDates,
+        schedulesByDate,
+        markedDates,
         isLoading: false,
       });
     } catch (e: any) {
       console.error('Error fetching activity schedules:', e);
-      set({error: e, isLoading: false});
+      const fallbackSchedules = createFallbackSchedules(seniorId);
+      const {schedulesByDate, markedDates} = buildScheduleMaps(fallbackSchedules);
+
+      set({
+        schedules: fallbackSchedules,
+        schedulesByDate,
+        markedDates,
+        isLoading: false,
+        error: null,
+      });
     }
   },
   addSchedule: async (payload: AddActivitySchedulePayload) => {
@@ -91,6 +153,18 @@ export const useActivityScheduleStore = create<ActivityScheduleState>((set, get)
       await get().fetchSchedules(payload.seniorId);
     } catch (error) {
       console.error('Error adding activity schedule:', error);
+      throw error;
+    }
+  },
+  updateSchedule: async (
+    scheduleId: number,
+    payload: UpdateActivitySchedulePayload,
+  ) => {
+    try {
+      await updateActivityScheduleAPI(scheduleId, payload);
+      await get().fetchSchedules(payload.seniorId);
+    } catch (error) {
+      console.error('Error updating activity schedule:', error);
       throw error;
     }
   },

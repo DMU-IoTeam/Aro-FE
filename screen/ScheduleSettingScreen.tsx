@@ -9,7 +9,7 @@ import {
   Platform,
   Pressable,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -42,10 +42,40 @@ const formatDate = (d: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+type ScheduleSettingRouteParams = {
+  ScheduleSettingScreen:
+    | {
+        mode?: 'edit';
+        schedule?: {
+          scheduleId: number;
+          seniorId: number;
+          title: string;
+          memo: string;
+          startTime: string;
+        };
+      }
+    | undefined;
+};
+
+const alignIndex = (base: string[], center: number, value: string) => {
+  const baseIndex = base.findIndex(item => item === value);
+  if (baseIndex === -1) {
+    return center;
+  }
+  const cycle = Math.floor(center / base.length);
+  return cycle * base.length + baseIndex;
+};
+
 const ScheduleSettingScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<
+    RouteProp<ScheduleSettingRouteParams, 'ScheduleSettingScreen'>
+  >();
   const {seniors} = useSeniorStore();
-  const {addSchedule} = useActivityScheduleStore();
+  const {addSchedule, updateSchedule} = useActivityScheduleStore();
+  const editSchedule =
+    route.params?.mode === 'edit' ? route.params.schedule : null;
+  const isEditMode = !!editSchedule;
 
   // Form State
   const [title, setTitle] = useState('');
@@ -72,11 +102,35 @@ const ScheduleSettingScreen = () => {
     }
   };
   useEffect(() => {
-    setTimeout(() => {
-      setHourIndex(centerHour);
-      setMinuteIndex(centerMinute);
-    }, 10);
-  }, []);
+    if (editSchedule) {
+      setTitle(editSchedule.title);
+      setMemo(editSchedule.memo ?? '');
+
+      const start = new Date(editSchedule.startTime);
+      setDate(start);
+
+      const hour24 = start.getHours();
+      const minute = start.getMinutes();
+      const isAm = hour24 < 12;
+      let hour12 = hour24 % 12;
+      if (hour12 === 0) hour12 = 12;
+
+      setAmPmIndex(isAm ? 0 : 1);
+      setHourIndex(alignIndex(baseHours, centerHour, String(hour12)));
+      setMinuteIndex(
+        alignIndex(baseMinutes, centerMinute, String(minute).padStart(2, '0')),
+      );
+    } else {
+      setTitle('');
+      setMemo('');
+      setDate(new Date());
+      setAmPmIndex(0);
+      setTimeout(() => {
+        setHourIndex(centerHour);
+        setMinuteIndex(centerMinute);
+      }, 10);
+    }
+  }, [editSchedule]);
   // ------------------------
 
   const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -86,16 +140,17 @@ const ScheduleSettingScreen = () => {
   };
 
   const handleSave = async () => {
-    if (seniors.length === 0) {
-      Alert.alert('오류', '등록된 피보호자가 없습니다.');
-      return;
-    }
     if (!title) {
       Alert.alert('오류', '일정 제목은 필수 항목입니다.');
       return;
     }
 
-    const seniorId = seniors[0].id;
+    const seniorId = editSchedule?.seniorId ?? seniors[0]?.id;
+
+    if (!seniorId) {
+      Alert.alert('오류', '등록된 피보호자가 없습니다.');
+      return;
+    }
 
     // 시간 계산
     const isAm = baseAmPm[ampmIndex] === '오전';
@@ -124,13 +179,20 @@ const ScheduleSettingScreen = () => {
     };
 
     try {
-      await addSchedule(payload);
-      Alert.alert('성공', '일정이 성공적으로 등록되었습니다.', [
-        {text: '확인', onPress: () => navigation.goBack()},
-      ]);
+      if (isEditMode && editSchedule) {
+        await updateSchedule(editSchedule.scheduleId, payload);
+        Alert.alert('성공', '일정이 수정되었습니다.', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      } else {
+        await addSchedule(payload);
+        Alert.alert('성공', '일정이 성공적으로 등록되었습니다.', [
+          {text: '확인', onPress: () => navigation.goBack()},
+        ]);
+      }
     } catch (error) {
       console.error(error);
-      Alert.alert('오류', '일정 등록 중 오류가 발생했습니다.');
+      Alert.alert('오류', '일정 저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -193,7 +255,9 @@ const ScheduleSettingScreen = () => {
           />
         </ScrollView>
         <View style={styles.buttonContainer}>
-          <CommonButton onPress={handleSave}>일정 저장</CommonButton>
+          <CommonButton onPress={handleSave}>
+            {isEditMode ? '일정 수정' : '일정 저장'}
+          </CommonButton>
         </View>
       </KeyboardAvoidingView>
     </Container>
