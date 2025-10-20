@@ -1,13 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import WheelPicker from 'react-native-wheely';
+import {View, Text, StyleSheet, Pressable, Alert, ScrollView} from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import Input from '../components/common/Input';
 import CommonButton from '../components/common/CommonButton';
@@ -18,6 +10,7 @@ import {
   addMedicationSchedule,
   updateMedicationSchedule,
 } from '../api/medication';
+import TimeWheelPicker from '../components/common/TimeWheelPicker';
 
 const LOOP_COUNT = 50;
 const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
@@ -91,39 +84,40 @@ const MedicineTimeSettingScreen = () => {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      setHourIndex(centerHour);
-      setMinuteIndex(centerMinute);
-    }, 10);
-  }, []);
+    const alignIndex = (base: string[], value: string, center: number) => {
+      const baseIndex = base.findIndex(v => v === value);
+      if (baseIndex === -1) {
+        return center;
+      }
+      const loop = Math.floor(center / base.length);
+      return loop * base.length + baseIndex;
+    };
 
-const centerAlignedIndex = (base: string[], center: number, value: string) => {
-  const baseIndex = base.findIndex(item => item === value);
-  if (baseIndex === -1) {
-    return center;
-  }
-  const cycle = Math.floor(center / base.length);
-    return cycle * base.length + baseIndex;
-  };
-
-  useEffect(() => {
     if (!editSchedule) {
+      setMedicineArray([]);
+      setMedicineName('');
+      setDose('1');
+      setMethod('식후 30분');
+      setAmPmIndex(0);
+      setTimeout(() => {
+        setHourIndex(centerHour);
+        setMinuteIndex(centerMinute);
+      }, 10);
       return;
     }
+
     const [hourPart, minutePart] = editSchedule.time.split(':');
     const normalizedHour = String(Number(hourPart) === 0 ? 12 : Number(hourPart));
     const normalizedMinute = minutePart.padStart(2, '0');
 
     setAmPmIndex(editSchedule.isAm ? 0 : 1);
-    setHourIndex(
-      centerAlignedIndex(baseHours, centerHour, normalizedHour),
-    );
-    setMinuteIndex(
-      centerAlignedIndex(baseMinutes, centerMinute, normalizedMinute),
-    );
+    setHourIndex(alignIndex(baseHours, normalizedHour, centerHour));
+    setMinuteIndex(alignIndex(baseMinutes, normalizedMinute, centerMinute));
     setMedicineArray(
       editSchedule.items.map(item => ({name: item.name, memo: item.memo})),
     );
+    setMedicineName('');
+    setDose('1');
   }, [editSchedule]);
 
   const medicineAddHandler = () => {
@@ -232,61 +226,18 @@ const centerAlignedIndex = (base: string[], center: number, value: string) => {
 
         {/* 복용 시간 */}
         <Text style={[styles.label, {marginTop: 16}]}>복용 시간</Text>
-        <View style={styles.segmentWrap}>
-          {AMPM.map((t, idx) => (
-            <Pressable
-              key={t}
-              onPress={() => setAmPmIndex(idx)}
-              style={[
-                styles.segment,
-                ampmIndex === idx && styles.segmentActive,
-              ]}>
-              <Text
-                style={[
-                  styles.segmentText,
-                  ampmIndex === idx && styles.segmentTextActive,
-                ]}>
-                {t}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <View style={styles.timePickerCard}>
-          <View style={styles.pickerRow}>
-            <View
-              style={styles.wheelWrap}
-              onTouchStart={beginWheel}
-              onTouchEnd={endWheel}
-              onTouchCancel={endWheel}>
-              <WheelPicker
-                options={repeatedHours}
-                selectedIndex={hourIndex}
-                onChange={handleHourChange}
-                itemHeight={60}
-                itemTextStyle={styles.itemTextStyle}
-                selectedIndicatorStyle={styles.selectedIndicatorStyle}
-                visibleRest={1}
-                containerStyle={styles.containerStyle}
-              />
-            </View>
-            <View
-              style={styles.wheelWrap}
-              onTouchStart={beginWheel}
-              onTouchEnd={endWheel}
-              onTouchCancel={endWheel}>
-              <WheelPicker
-                options={repeatedMinutes}
-                selectedIndex={minuteIndex}
-                onChange={handleMinuteChange}
-                itemHeight={60}
-                itemTextStyle={styles.itemTextStyle}
-                selectedIndicatorStyle={styles.selectedIndicatorStyle}
-                visibleRest={1}
-                containerStyle={styles.containerStyle}
-              />
-            </View>
-          </View>
-        </View>
+        <TimeWheelPicker
+          ampmIndex={ampmIndex}
+          setAmPmIndex={setAmPmIndex}
+          hourIndex={hourIndex}
+          setHourIndex={handleHourChange}
+          minuteIndex={minuteIndex}
+          setMinuteIndex={handleMinuteChange}
+          repeatedHours={repeatedHours}
+          repeatedMinutes={repeatedMinutes}
+          onBeginInteraction={beginWheel}
+          onEndInteraction={endWheel}
+        />
 
         {/* 복용 방법 */}
         <Text style={[styles.label, {marginTop: 16}]}>복용 방법</Text>
@@ -356,52 +307,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  segmentWrap: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
-    width: '100%',
-  },
-  segment: {
-    flex: 1,
-    height: 48,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentActive: {
-    backgroundColor: '#3B82F6',
-  },
-  segmentText: {color: '#334155', fontWeight: '600'},
-  segmentTextActive: {color: 'white'},
-  timePickerCard: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 12,
-  },
-  pickerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    height: 190,
-  },
-  wheelWrap: {
-    flex: 1,
-  },
-  itemTextStyle: {
-    fontSize: 32,
-  },
-  containerStyle: {
-    flex: 1,
-  },
-  selectedIndicatorStyle: {
-    borderBottomWidth: 1,
-    borderTopWidth: 1,
-    borderTopColor: 'gray',
-    borderBottomColor: 'gray',
-    backgroundColor: 'white',
   },
   inputStyle: {
     borderColor: 'gray',
