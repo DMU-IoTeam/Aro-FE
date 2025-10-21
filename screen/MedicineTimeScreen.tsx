@@ -211,7 +211,11 @@ export const MedicineScheduleItem = ({
         scheduleId,
         time,
         isAm,
-        items: medicine.map(med => ({name: med.name, memo: med.memo})),
+        items: medicine.map(med => ({
+          id: med.id,
+          name: med.name,
+          memo: med.memo,
+        })),
         userId,
       },
     });

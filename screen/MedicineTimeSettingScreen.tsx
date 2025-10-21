@@ -12,6 +12,11 @@ import {
 } from '../api/medication';
 import TimeWheelPicker from '../components/common/TimeWheelPicker';
 
+const METHOD_OPTIONS = ['식전 30분', '식후 30분', '식사와 함께', '시간 관계없이'] as const;
+type MethodOption = (typeof METHOD_OPTIONS)[number];
+const DEFAULT_METHOD: MethodOption = '식후 30분';
+const DEFAULT_DOSE = '1';
+
 const LOOP_COUNT = 50;
 const baseHours = Array.from({length: 12}, (_, i) => (i + 1).toString());
 const baseMinutes = Array.from({length: 60}, (_, i) =>
@@ -33,7 +38,7 @@ type MedicineTimeSettingRouteParams = {
           scheduleId: number;
           time: string;
           isAm: boolean;
-          items: Array<{name: string; memo: string}>;
+          items: Array<{id?: number; name: string; memo: string}>;
           userId: number;
         };
       }
@@ -52,13 +57,9 @@ const MedicineTimeSettingScreen = () => {
   const [ampmIndex, setAmPmIndex] = useState(0);
 
   const [medicineName, setMedicineName] = useState('');
-  const [dose, setDose] = useState('1');
-  const [method, setMethod] = useState<
-    '식전 30분' | '식후 30분' | '식사와 함께' | '시간 관계없이'
-  >('식후 30분');
-  const [medicineArray, setMedicineArray] = useState<
-    Array<{name: string; memo: string}>
-  >([]);
+  const [dose, setDose] = useState(DEFAULT_DOSE);
+  const [method, setMethod] = useState<MethodOption>(DEFAULT_METHOD);
+  const [medicineItemId, setMedicineItemId] = useState<number | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const editSchedule = route.params?.mode === 'edit' ? route.params.schedule : null;
   const isEditMode = !!editSchedule;
@@ -94,10 +95,10 @@ const MedicineTimeSettingScreen = () => {
     };
 
     if (!editSchedule) {
-      setMedicineArray([]);
       setMedicineName('');
-      setDose('1');
-      setMethod('식후 30분');
+      setDose(DEFAULT_DOSE);
+      setMethod(DEFAULT_METHOD);
+      setMedicineItemId(null);
       setAmPmIndex(0);
       setTimeout(() => {
         setHourIndex(centerHour);
@@ -118,41 +119,44 @@ const MedicineTimeSettingScreen = () => {
       setHourIndex(nextHourIndex);
       setMinuteIndex(nextMinuteIndex);
     }, 10);
-    setMedicineArray(
-      editSchedule.items.map(item => ({name: item.name, memo: item.memo})),
-    );
-    setMedicineName('');
-    setDose('1');
+    const firstItem = editSchedule.items?.[0];
+    if (firstItem) {
+      setMedicineItemId(firstItem.id ?? null);
+      setMedicineName(firstItem.name ?? '');
+      const {memoMethod, memoDose} = (() => {
+        const memo = firstItem.memo ?? '';
+        const [methodPartRaw = '', dosePartRaw = ''] = memo.split('·').map(part => part.trim());
+        const matchedMethod = METHOD_OPTIONS.find(opt => methodPartRaw.includes(opt));
+        const extractedDose = dosePartRaw.replace(/[^0-9]/g, '');
+        return {
+          memoMethod: (matchedMethod ?? DEFAULT_METHOD) as MethodOption,
+          memoDose: extractedDose.length > 0 ? extractedDose : DEFAULT_DOSE,
+        };
+      })();
+      setMethod(memoMethod);
+      setDose(memoDose);
+    } else {
+      setMedicineName('');
+      setDose(DEFAULT_DOSE);
+      setMethod(DEFAULT_METHOD);
+      setMedicineItemId(null);
+    }
   }, [editSchedule]);
 
-  const medicineAddHandler = () => {
-    if (medicineName.length === 0) {
-      Alert.alert('오류', '약 이름을 입력해주세요.');
-      return;
-    }
-    const memoText = `${method}${dose ? ` · ${dose}정` : ''}`;
-    setMedicineArray([...medicineArray, {name: medicineName, memo: memoText}]);
-    setMedicineName('');
-    setDose('1');
-  };
-
-  const removeMedicineItem = (index: number) => {
-    setMedicineArray(prev => prev.filter((_, idx) => idx !== index));
-  };
-
   const handleSave = async () => {
-    // 항목이 없으면 현재 입력으로 1개 구성
-    const items =
-      medicineArray.length > 0
-        ? medicineArray
-        : medicineName
-        ? [{name: medicineName, memo: `${method}${dose ? ` · ${dose}정` : ''}`}]
-        : [];
-
-    if (items.length === 0) {
+    const trimmedName = medicineName.trim();
+    if (trimmedName.length === 0) {
       Alert.alert('오류', '약물명을 입력해주세요.');
       return;
     }
+
+    const items = [
+      {
+        id: medicineItemId ?? undefined,
+        name: trimmedName,
+        memo: `${method}${dose ? ` · ${dose}정` : ''}`,
+      },
+    ];
 
     const resolvedUserId =
       editSchedule?.userId ?? seniors[0]?.id ?? null;
@@ -247,9 +251,7 @@ const MedicineTimeSettingScreen = () => {
         {/* 복용 방법 */}
         <Text style={[styles.label, {marginTop: 16}]}>복용 방법</Text>
         <View style={{gap: 10}}>
-          {(
-            ['식전 30분', '식후 30분', '식사와 함께', '시간 관계없이'] as const
-          ).map(opt => {
+          {METHOD_OPTIONS.map(opt => {
             const active = method === opt;
             return (
               <Pressable
@@ -271,25 +273,6 @@ const MedicineTimeSettingScreen = () => {
             );
           })}
         </View>
-
-        {/* 추가된 약 리스트 */}
-        {medicineArray.length > 0 && (
-          <View style={{marginTop: 16}}>
-            {medicineArray.map((item, index) => (
-              <View key={index} style={styles.previewCard}>
-                <Text style={{fontWeight: '700'}}>{item.name}</Text>
-                <Text style={{color: '#64748B', marginTop: 2}}>
-                  {item.memo}
-                </Text>
-                <Pressable
-                  style={styles.previewRemove}
-                  onPress={() => removeMedicineItem(index)}>
-                  <Text style={styles.previewRemoveText}>삭제</Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        )}
 
         <View style={{marginVertical: 16}}>
           <CommonButton onPress={handleSave}>
@@ -352,23 +335,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
     alignSelf: 'center',
     marginTop: 3,
-  },
-  previewCard: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: 12,
-    backgroundColor: 'white',
-    marginBottom: 10,
-  },
-  previewRemove: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
-  previewRemoveText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#EF4444',
   },
   bottomAction: {
     position: 'absolute',
