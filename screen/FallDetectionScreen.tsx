@@ -96,7 +96,8 @@ const FallDetectionScreen = () => {
             source={{uri: clip.videoUrl}}
             style={styles.video}
             resizeMode="contain"
-            controls
+            controls={false}
+            paused={false}
           />
         ) : (
           <Text style={styles.videoPlaceholderText}>

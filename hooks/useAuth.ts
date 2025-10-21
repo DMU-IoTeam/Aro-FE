@@ -7,8 +7,8 @@ export const useAuth = () => {
   const [initialRoute, setInitialRoute] = useState('LoginScreen');
 
   useEffect(() => {
-    setInitialRoute('MainScreen');
-    setIsLoading(false);
+    // setInitialRoute('MainScreen');
+    // setIsLoading(false);
 
     const checkAuthStatus = async () => {
       try {
@@ -29,7 +29,7 @@ export const useAuth = () => {
       }
     };
 
-    // checkAuthStatus();
+    checkAuthStatus();
   }, []);
 
   return {isLoading, initialRoute};
