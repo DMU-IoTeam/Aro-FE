@@ -53,7 +53,17 @@ export const useHealthCheckStore = create<HealthCheckState>((set, get) => ({
     set({isLoading: true});
     try {
       const questions = await getHealthQuestions(seniorId);
-      set({questions, isLoading: false});
+      set({
+        questions: questions.map(question => ({
+          ...question,
+          optionType: question.options.some(
+            option => option.replace(/\s+/g, '') === '아주좋음',
+          )
+            ? 'default'
+            : 'custom',
+        })),
+        isLoading: false,
+      });
     } catch (error) {
       console.error('Failed to fetch health questions:', error);
       set({questions: fallbackQuestions(), isLoading: false});

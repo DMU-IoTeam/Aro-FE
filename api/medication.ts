@@ -104,7 +104,7 @@ export const addMedicationSchedule = async (
   payload: AddMedicationSchedulePayload,
 ): Promise<void> => {
   try {
-    console.log('복약 추가 api', payload)
+    // console.log('복약 추가 api', payload)
     await apiClient.post('/api/medication/schedule', payload);
   } catch (error) {
     console.error('Error adding medication schedule:', error);
@@ -122,7 +122,7 @@ export const updateMedicationSchedule = async (
   payload: UpdateMedicationSchedulePayload,
 ): Promise<void> => {
   try {
-    console.log('복약 수정 api', payload)
+    // console.log('복약 수정 api', payload)
     await apiClient.put(`/api/medication/schedule/${scheduleId}`, payload);
   } catch (error) {
     console.error(
@@ -158,7 +158,7 @@ export const getMedicationSchedule = async (
     const response = await apiClient.get<MedicationScheduleResponse[]>(
       `/api/medication/schedule/${seniorId}`,
     );
-    console.log('복약 스케줄 조회 api', response.data)
+    // console.log('복약 스케줄 조회 api', response.data)
     return response.data;
   } catch (error) {
     console.error(`Error fetching medication schedule for senior ${seniorId}:`, error);

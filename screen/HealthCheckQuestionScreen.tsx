@@ -57,14 +57,32 @@ const HealthCheckQuestionScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (questionId) {
-      const existingQuestion = questions.find(q => q.id === questionId);
-      if (existingQuestion) {
-        setText(existingQuestion.questionText);
-        setOptionType(existingQuestion.optionType);
-        setOptions(existingQuestion.options);
-      }
+    if (!questionId) {
+      setOptionType('default');
+      setOptions([...defaultOptions]);
+      setCustomOptionInput('');
+      return;
     }
+
+    const existingQuestion = questions.find(q => q.id === questionId);
+    if (!existingQuestion) {
+      return;
+    }
+
+    setText(existingQuestion.questionText);
+
+    const looksLikeDefault = existingQuestion.options.some(option =>
+      option.replace(/\s+/g, '').includes('아주좋'),
+    );
+    const derivedOptionType = looksLikeDefault ? 'default' : 'custom';
+
+    setOptionType(derivedOptionType);
+    setOptions(
+      derivedOptionType === 'default'
+        ? [...defaultOptions]
+        : [...existingQuestion.options],
+    );
+    setCustomOptionInput('');
   }, [questionId, questions]);
 
   const handleSave = async () => {
@@ -91,11 +109,36 @@ const HealthCheckQuestionScreen = () => {
 
   const handleSetOptionType = (type: 'default' | 'custom') => {
     setOptionType(type);
+
     if (type === 'default') {
       setOptions([...defaultOptions]);
-    } else if (!questionId) {
-      setOptions([]);
+      setCustomOptionInput('');
+      return;
     }
+
+    if (!questionId) {
+      setOptions([]);
+      setCustomOptionInput('');
+      return;
+    }
+
+    const existingQuestion = questions.find(q => q.id === questionId);
+    if (!existingQuestion) {
+      setOptions([]);
+      setCustomOptionInput('');
+      return;
+    }
+
+    const looksLikeDefault = existingQuestion.options.some(option =>
+      option.replace(/\s+/g, '').includes('아주좋'),
+    );
+
+    if (looksLikeDefault) {
+      setOptions([]);
+    } else {
+      setOptions([...existingQuestion.options]);
+    }
+    setCustomOptionInput('');
   };
 
   const addCustomOption = () => {
