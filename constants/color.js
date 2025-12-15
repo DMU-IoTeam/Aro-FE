@@ -1,5 +1,5 @@
 const COLOR = {
-    DEFAULT_COLOR : "#FF7E1B",
+    DEFAULT_COLOR : "#3B82F6",
     GRAY900: "gray",
     GRAY700: "#a3a3a3"
 }

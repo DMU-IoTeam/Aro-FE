@@ -1,54 +1,87 @@
-import {useState} from 'react';
-import Input from '../components/common/Input';
-import Container from '../layouts/Container';
-import CommonButton from '../components/common/CommonButton';
-import {Pressable, Text, View} from 'react-native';
+import React, {useState} from 'react';
+import {
+  Modal,
+  Button,
+  View,
+  Platform,
+  Pressable,
+  Image,
+  StyleSheet,
+} from 'react-native';
+import {WebView} from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import COLOR from '../constants/color';
+
+const AUTH_URL = `${process.env.REACT_APP_API_BASE_URL}/oauth2/authorization/kakao`;
+// const AUTH_URL = 'https://bd00a025d02d.ngrok-free.app/oauth2/authorization/kakao';
+console.log('AUTH_URL:', AUTH_URL);
+const FINAL_REDIRECT_URI = 'http://localhost:3000/oauth2/redirect';
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const authNavigationData = [
-    {text: '회원가입', screenName: 'SignupScreen'},
-    {text: '아이디 찾기', screenName: 'SignupScreen'},
-    {text: '비밀번호 찾기', screenName: 'SignupScreen'},
-  ];
-
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const navigation = useNavigation();
 
-  return (
-    <Container style={{gap: 24}}>
-      {/* 아이디 비번 입력 */}
-      <Input placeholder="이메일" value={email} onChangeText={setEmail} />
-      <Input
-        placeholder="비밀번호"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <CommonButton onPress={() => {}}>로그인</CommonButton>
+  // 토큰 추출 및 화면 이동 로직을 공통 함수로 분리
+  const processTokenExtraction = async (url: string) => {
+    if (url.startsWith(FINAL_REDIRECT_URI)) {
+      console.log('최종 URI로 리다이렉트 감지:', url);
 
-      {/* 회원가입, 아이디 찾기 네비게이션 */}
-      <View style={{flexDirection: 'row'}}>
-        {authNavigationData.map((value, index) => {
-          return (
-            <Pressable
-              onPress={() => {
-                navigation.navigate(value.screenName);
-              }}
-              style={{
-                flex: 1,
-                borderRightWidth: index !== 2 ? 1 : 0,
-                borderColor: COLOR.GRAY900,
-              }}
-              key={index}>
-              <Text style={{textAlign: 'center', fontSize: 18}}>{value.text}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </Container>
+      const match = url.match(/[?&]token=([^&]+)/);
+      const token = match ? match[1] : null;
+
+      if (token) {
+        console.log('추출된 JWT 토큰:', token);
+        try {
+          await AsyncStorage.setItem('accessToken', token);
+          navigation.replace('MainScreen'); // 메인 화면으로 이동
+        } catch (e) {
+          console.error('토큰 저장 실패', e);
+        }
+      }
+      // 성공적으로 토큰을 처리했거나, 토큰이 없더라도 모달을 닫음
+      setIsModalVisible(false);
+    }
+  };
+
+  const handleNavigationStateChange = async navState => {
+    await processTokenExtraction(navState.url);
+  };
+
+  // WebView 에러 핸들러
+  const handleError = async syntheticEvent => {
+    const {nativeEvent} = syntheticEvent;
+    console.warn('WebView error: ', nativeEvent);
+    // 연결 거부 오류가 발생했더라도, URL에 토큰이 포함되어 있을 수 있으므로 토큰 추출 시도
+    await processTokenExtraction(nativeEvent.url);
+  };
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        paddingTop: 100,
+        backgroundColor: '#FF936530',
+      }}>
+      <Image
+        source={require('../assets/aro.png')}
+        style={{width: 200, height: 300, resizeMode: 'contain'}}
+      />
+      <Pressable onPress={() => setIsModalVisible(true)}>
+        <Image source={require('../assets/kakao-login.png')} />
+      </Pressable>
+      <Modal
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}>
+        <WebView
+          source={{uri: AUTH_URL}}
+          onNavigationStateChange={handleNavigationStateChange}
+          onError={handleError}
+          incognito={true}
+        />
+        <Button title="닫기" onPress={() => setIsModalVisible(false)} />
+      </Modal>
+    </View>
   );
 };
 
