@@ -6,6 +6,8 @@ import {
   Pressable,
   StyleSheet,
   View,
+  Linking,
+  Alert,
 } from 'react-native';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import Video from 'react-native-video';
@@ -80,29 +82,29 @@ const FallDetectionScreen = () => {
   return (
     <View>
       <View
-        style={{backgroundColor: '#DC2626', paddingTop: 55, padding: 25, alignItems: 'center'}}>
+        style={{
+          backgroundColor: '#DC2626',
+          paddingTop: 55,
+          padding: 25,
+          alignItems: 'center',
+        }}>
         <Text style={{color: 'white', fontWeight: '700', fontSize: 24}}>
           낙상감지
         </Text>
       </View>
 
       {/* 영상 */}
-      <View
-        style={styles.videoContainer}>
+      <View style={styles.videoContainer}>
         {isLoading ? (
           <ActivityIndicator color="#FFFFFF" size="large" />
-        ) : clip ? (
+        ) : (
           <Video
-            source={{uri: clip.videoUrl}}
+            source={{uri: require('../assets/fall.mp4')}}
             style={styles.video}
             resizeMode="contain"
             controls={false}
             paused={false}
           />
-        ) : (
-          <Text style={styles.videoPlaceholderText}>
-            {errorMessage ?? '영상이 준비되지 않았습니다.'}
-          </Text>
         )}
       </View>
 
@@ -113,14 +115,27 @@ const FallDetectionScreen = () => {
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 30
+          padding: 30,
         }}>
         <Pressable
-          style={{...styles.fallButtonWrapper, backgroundColor: '#10B981'}}>
-                      <Image source={require('../assets/call.png')} />
+          style={{...styles.fallButtonWrapper, backgroundColor: '#10B981'}}
+          onPress={() => {
+            Linking.openURL('tel:119').catch(err => {
+              console.error('Failed to initiate call:', err);
+              Alert.alert('오류', '전화 앱을 열 수 없습니다.');
+            });
+          }}>
+          <Image source={require('../assets/call.png')} />
           <Text style={styles.fallButtonText}>전화</Text>
         </Pressable>
-        <Pressable style={{...styles.fallButtonWrapper, backgroundColor: '#DC2626'}}>
+        <Pressable
+          style={{...styles.fallButtonWrapper, backgroundColor: '#DC2626'}}
+          onPress={() => {
+            Linking.openURL('tel:119').catch(err => {
+              console.error('Failed to initiate emergency call:', err);
+              Alert.alert('오류', '응급 전화 앱을 열 수 없습니다.');
+            });
+          }}>
           <Image source={require('../assets/warning.png')} />
           <Text style={styles.fallButtonText}>신고</Text>
         </Pressable>
@@ -138,7 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     flex: 1,
     borderRadius: 10,
-    gap: 6
+    gap: 6,
   },
 
   fallButtonText: {
@@ -149,7 +164,7 @@ const styles = StyleSheet.create({
     height: 400,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 30
+    padding: 30,
   },
   video: {
     width: '100%',

@@ -782,9 +782,20 @@ const MainScreen = () => {
       </View>
 
       <Text style={styles.sectionTitle}>오늘의 현황</Text>
-      <ScrollView style={styles.statusColumn} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.statusColumn}
+        showsVerticalScrollIndicator={false}>
         {todayOverview.map(card => (
-          <View key={card.key} style={styles.statusCard}>
+          <Pressable
+            key={card.key}
+            style={styles.statusCard}
+            onPress={() => {
+              if (card.key === 'health-status') {
+                navigateHandler('HealthCheckCalendarScreen');
+              } else if (card.key === 'medicine-status') {
+                navigateHandler('CalendarScreen');
+              }
+            }}>
             <View style={styles.statusHeader}>
               <View style={styles.statusTitleRow}>
                 <View
@@ -845,7 +856,7 @@ const MainScreen = () => {
                 {card.footer}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </Container>
