@@ -160,3 +160,5 @@ google-services.json
 firebase-config.ts
 
 .env
+
+*.mp4
